@@ -1,647 +1,456 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Sudan | IDPs Pathways Across Sudan</title>
-  
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  
-  <!-- Custom CSS -->
-  <style>
-  body {
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  overflow: hidden; /* Prevent scroll */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f7fa;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-}
-
-.container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  max-width: 100%;
-  padding: 0 20px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.header {
-  text-align: center;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  flex-shrink: 0;
-}
-
-h1 {
-  color: #2a5885;
-  margin-bottom: 10px;
-}
-
-.subtitle {
-  color: #666;
-  font-size: 1.1em;
-}
-
-.map-container {
-  flex: 1;
-  position: relative;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-#map {
-  height: 100%;
-  width: 100%;
-}
-
-.legend {
-  padding: 10px 15px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 5px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
-  line-height: 1.5;
-  font-size: 14px;
-}
-
-.legend h4 {
-  margin: 0 0 10px;
-  color: #2a5885;
-}
-
-.legend i {
-  width: 18px;
-  height: 3px;
-  float: left;
-  margin-right: 8px;
-  opacity: 0.9;
-}
-
-.map-controls {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
-}
-
-.control-btn {
-  display: block;
-  width: 100%;
-  margin-bottom: 5px;
-  padding: 5px 10px;
-  background: #2a5885;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.control-btn:hover {
-  background: #3a6ea5;
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #2a5885;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 15px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.info-panel {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 15px;
-  border-radius: 5px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
-  max-width: 300px;
-  font-size: 14px;
-}
-
-.info-panel h3 {
-  margin-top: 0;
-  color: #2a5885;
-}
-
-.info-panel p {
-  margin-bottom: 10px;
-}
-
-.info-panel .close-btn {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: #666;
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 0 10px;
-  }
-
-  .header {
-    padding: 15px;
-  }
-
-  .info-panel {
-    max-width: 200px;
-    font-size: 12px;
-    padding: 10px;
-  }
-}
-
-  </style>
-</head>
-
-<body>
-
-    <div class="map-container">
-      <div id="map"></div>
-      
-      <!-- Loading overlay -->
-      <div class="loading-overlay" id="loading-overlay">
-        <div class="spinner"></div>
-        <div>Loading displacement data...</div>
-      </div>
-      
-      <!-- Map controls -->
-      <div class="map-controls">
-        <button class="control-btn" id="reset-view">
-          <i class="fas fa-globe-africa"></i> Reset View
-        </button>
-        <button class="control-btn" id="toggle-animation">
-          <i class="fas fa-play" id="animation-icon"></i> <span id="animation-text">Play</span>
-        </button>
-        <button class="control-btn" id="toggle-flows">
-          <i class="fas fa-wave-square"></i> <span id="flows-text">Show Flows</span>
-        </button>
-        <button class="control-btn" id="toggle-points">
-          <i class="fas fa-map-marker-alt"></i> <span id="points-text">Show Points</span>
-        </button>
-      </div>
-      
-      <!-- Info panel -->
-      <div class="info-panel" id="info-panel">
-        <button class="close-btn" id="close-info">&times;</button>
-        <h3>How to use this map</h3>
-        <p><strong>Click</strong> on any flow line or point to see detailed information about that displacement pathway.</p>
-        <p><strong>Hover</strong> over elements to see quick details.</p>
-        <p>Use the <strong>controls</strong> in the top right to adjust what's displayed.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  
-  <!-- Flowmap layer dependencies -->
-  <script src="https://unpkg.com/@tweenjs/tween.js@18.6.4/dist/tween.umd.js"></script>
-  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
-  <script src="./src/CanvasFlowmapLayer.js"></script>
-  
-  <!-- Main script -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize the map
-      const map = L.map('map').setView([16, 30], 5.5);
-      
-   // Replace the existing base layer definitions with these:
-const cartoDBLight1 = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-});
-
-const openStreetMap1 = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-});
-
-const esriWorldImagery1 = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
-});
-
-const stamenToner1 = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
-  attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>'
-});
-
-const mapboxLight = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18
-});
-
-const mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18
-});
-
-const mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18
-});
-
-const mapboxOutdoors = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18
-});
-    const mapboxCustom1 = L.tileLayer('https://api.mapbox.com/styles/v1/omerosman/cm8oy6is4006101si7ll3bs4h/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        tileSize: 512,
-        zoomOffset: -1,
-        maxZoom: 18
-    });
-// Add default base layer to the map
-mapboxCustom1.addTo(map);
-
-// Add layer control to the map
-const baseLayers = {
-  "Mapbox Light": mapboxLight,
-  "Mapbox Streets": mapboxStreets,
-  "Mapbox Outdoors": mapboxOutdoors,
-  "Mapbox Satellite": mapboxSatellite,
-  "CartoDB Light": cartoDBLight1,
-  "OpenStreetMap": openStreetMap1,
-  "Esri World Imagery": esriWorldImagery1,
-  "Stamen Toner": stamenToner1,
-  "Mapbox Custom": mapboxCustom1
-};
-
-L.control.layers(baseLayers).addTo(map);
-      
-      // State boundaries layer (for reference)
-      let stateBoundariesLayer;
-      
-      // Flowmap layer variables
-      let flowmapLayer;
-      let isAnimationPlaying = false;
-      let showFlows = true;
-      let showPoints = true;
-      
-      // Load data and initialize visualization
-      loadData();
-      
-      // UI event handlers
-      document.getElementById('reset-view').addEventListener('click', function() {
-        map.setView([16, 30], 5.5);
-      });
-      
-      document.getElementById('toggle-animation').addEventListener('click', function() {
-        isAnimationPlaying = !isAnimationPlaying;
-        
-        if (flowmapLayer) {
-          flowmapLayer.setAnimationStarted(isAnimationPlaying);
-          updateAnimationButton();
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTM Sudan - Flow Monitoring Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
         }
-      });
-      
-      document.getElementById('toggle-flows').addEventListener('click', function() {
-        showFlows = !showFlows;
         
-        if (flowmapLayer) {
-          flowmapLayer.setPathDisplayMode(showFlows ? 'all' : 'none');
-          updateFlowsButton();
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-      });
-      
-      document.getElementById('toggle-points').addEventListener('click', function() {
-        showPoints = !showPoints;
         
-        if (flowmapLayer) {
-          flowmapLayer.setPointVisibility(showPoints);
-          updatePointsButton();
+        body {
+            background-color: #f5f5f5;
+            color: #333;
         }
-      });
-      
-      document.getElementById('close-info').addEventListener('click', function() {
-        document.getElementById('info-panel').style.display = 'none';
-      });
-      
-      // Update button states
-      function updateAnimationButton() {
-        const icon = document.getElementById('animation-icon');
-        const text = document.getElementById('animation-text');
         
-        if (isAnimationPlaying) {
-          icon.className = 'fas fa-pause';
-          text.textContent = 'Pause';
-        } else {
-          icon.className = 'fas fa-play';
-          text.textContent = 'Play';
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-      }
-      
-      function updateFlowsButton() {
-        const text = document.getElementById('flows-text');
-        text.textContent = showFlows ? 'Hide Flows' : 'Show Flows';
-      }
-      
-      function updatePointsButton() {
-        const text = document.getElementById('points-text');
-        text.textContent = showPoints ? 'Hide Points' : 'Show Points';
-      }
-      
-      // Load and process data
-      function loadData() {
-        // Load state boundaries (GeoJSON)
-        fetch('./data/sudan_states.geojson')
-          .then(response => response.json())
-          .then(data => {
-            stateBoundariesLayer = L.geoJSON(data, {
-              style: {
-                color: '#555',
-                weight: 1,
-                opacity: 0.7,
-                fillOpacity: 0.1
-              }
-            }).addTo(map);
-          })
-          .catch(error => {
-            console.error('Error loading state boundaries:', error);
-          });
         
-        // Load displacement data (CSV)
-        Papa.parse('./data/IDPs_Pathway.csv', {
-          download: true,
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: function(results) {
-            // Process the data to ensure displacement destination equals sum of e_Volume by e_locality_id
-            const processedData = processData(results.data);
-            initializeFlowmap(processedData);
-            document.getElementById('loading-overlay').style.display = 'none';
-          },
-          error: function(error) {
-            console.error('Error loading displacement data:', error);
-            document.getElementById('loading-overlay').innerHTML = 
-              '<div style="color: red; text-align: center;">Error loading data. Please try again later.</div>';
-          }
-        });
-      }
-      
-      // Process data to ensure displacement destination equals sum of e_Volume by e_locality_id
-      function processData(data) {
-        // Group data by e_locality_id and calculate total volume for each destination
-        const destinationVolumes = {};
+        .logo {
+            display: flex;
+            align-items: center;
+        }
         
-        data.forEach(item => {
-          const localityId = item.e_locality_id;
-          const volume = parseFloat(item.e_Volume) || 0;
-          
-          if (!destinationVolumes[localityId]) {
-            destinationVolumes[localityId] = {
-              totalVolume: 0,
-              items: []
-            };
-          }
-          
-          destinationVolumes[localityId].totalVolume += volume;
-          destinationVolumes[localityId].items.push(item);
-        });
+        .logo img {
+            height: 40px;
+            margin-right: 15px;
+        }
         
-        // Update each item's e_Volume to be the total volume for its destination
-        const processedData = [];
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         
-        Object.keys(destinationVolumes).forEach(localityId => {
-          const destination = destinationVolumes[localityId];
-          const totalVolume = destination.totalVolume;
-          
-          destination.items.forEach(item => {
-            // Update the e_Volume to be the total for this destination
-            item.e_Volume = totalVolume;
-            processedData.push(item);
-          });
-        });
+        .date-filter select, .date-filter input {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
         
-        return processedData;
-      }
-      
-      // Initialize flowmap visualization
-      function initializeFlowmap(data) {
-        // Convert CSV data to GeoJSON format
-        const geoJsonFeatureCollection = {
-          type: 'FeatureCollection',
-          features: data.map(datum => ({
-            type: 'Feature',
-            geometry: { type: 'Point', coordinates: [datum.s_lon, datum.s_lat] },
-            properties: datum
-          }))
-        };
+        .container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
         
-        // Create flowmap layer
-        flowmapLayer = L.canvasFlowmapLayer(geoJsonFeatureCollection, {
-          originAndDestinationFieldIds: {
-            originUniqueIdField: 's_state_id',
-            originGeometry: { x: 's_lon', y: 's_lat' },
-            destinationUniqueIdField: 'e_locality_id',
-            destinationGeometry: { x: 'e_lon', y: 'e_lat' }
-          },
-          style: (feature) => {
-            const baseRadius = 10;
-            const maxRadius = 6;
-            const volume = feature.properties.e_Volume || 0;
-            
-            // Different styles for origin and destination points
-            const radius = feature.properties.isOrigin
-              ? baseRadius
-              : Math.min(baseRadius + (volume / 5000), maxRadius);
-            
-            return {
-              radius: radius,
-              weight: 1,
-              color: '#fff',
-              fillColor: feature.properties.isOrigin ? '#ff671f' : '#418FDE',
-              fillOpacity: feature.properties.isOrigin ? 0.8 : 0.7
-            };
-          },
-          canvasBezierStyle: {
-            type: 'classBreaks',
-            field: 'e_Volume',
-            classBreakInfos: [
-              { 
-                classMinValue: 1, 
-                classMaxValue: 80000, 
-                symbol: { 
-                  strokeStyle: '#ffb81c', 
-                  lineWidth: 0.5, 
-                  lineCap: 'round', 
-                  shadowColor: '#fee8c8', 
-                  shadowBlur: 2.0 
-                } 
-              },
-              { 
-                classMinValue: 80001, 
-                classMaxValue: 1000000, 
-                symbol: { 
-                  strokeStyle: '#ff671f', 
-                  lineWidth: 1.5, 
-                  lineCap: 'round', 
-                  shadowColor: '#fdbb84', 
-                  shadowBlur: 2.0 
-                } 
-              },
-              { 
-                classMinValue: 1000001, 
-                classMaxValue: 160000, 
-                symbol: { 
-                  strokeStyle: '#d22630', 
-                  lineWidth: 3, 
-                  lineCap: 'round', 
-                  shadowColor: '#e34a33', 
-                  shadowBlur: 2.0 
-                } 
-              }
-            ],
-            defaultSymbol: { 
-              strokeStyle: '#e7e1ef', 
-              lineWidth: 0.5, 
-              lineCap: 'round', 
-              shadowColor: '#e7e1ef', 
-              shadowBlur: 1.5 
+        .sidebar {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        
+        .filter-group h4 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: var(--dark-color);
+        }
+        
+        .filter-group select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .card h3 {
+            font-size: 14px;
+            color: var(--dark-color);
+            margin-bottom: 10px;
+        }
+        
+        .card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .card.incoming .value {
+            color: var(--success-color);
+        }
+        
+        .card.outgoing .value {
+            color: var(--accent-color);
+        }
+        
+        .data-visualization {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            height: 300px;
+        }
+        
+        .chart-container h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .chart {
+            height: calc(100% - 40px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        
+        .data-table {
+            grid-column: 1 / -1;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .incoming-badge {
+            background-color: var(--success-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .outgoing-badge {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
             }
-          },
-          pathDisplayMode: 'all',
-          animationStarted: true,
-          animationEasingFamily: 'Linear',
-          animationEasingType: 'None',
-          animationDuration: 3000,
-          onEachFeature: addTooltip
-        }).addTo(map);
+            
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .data-visualization {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="https://dtm.iom.int/sites/default/files/dtm_primary_logo_0.png" alt="DTM Logo">
+            <h1>Sudan Flow Monitoring Dashboard</h1>
+        </div>
+        <div class="date-filter">
+            <select id="time-period">
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="90">Last 90 days</option>
+                <option value="custom">Custom range</option>
+            </select>
+            <input type="date" id="start-date">
+            <input type="date" id="end-date">
+        </div>
+    </header>
+    
+    <div class="container">
+        <aside class="sidebar">
+            <h3>Filters</h3>
+            
+            <div class="filter-group">
+                <h4>State</h4>
+                <select id="state-filter">
+                    <option value="">All States</option>
+                    <option value="SD17">State SD17</option>
+                    <option value="SD06">State SD06</option>
+                    <!-- More states would be populated from data -->
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <h4>Locality</h4>
+                <select id="locality-filter">
+                    <option value="">All Localities</option>
+                    <option value="SD17014">Locality SD17014</option>
+                    <option value="SD06135">Locality SD06135</option>
+                    <!-- More localities would be populated from data -->
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <h4>Monitoring Point</h4>
+                <select id="point-filter">
+                    <option value="">All Points</option>
+                    <option value="SD17014PB3">Point SD17014PB3</option>
+                    <option value="SD06135PB5">Point SD06135PB5</option>
+                    <!-- More points would be populated from data -->
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <h4>Neighboring Country</h4>
+                <select id="country-filter">
+                    <option value="">All Countries</option>
+                    <option value="Egypt">Egypt</option>
+                    <option value="Chad">Chad</option>
+                    <!-- More countries would be populated from data -->
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <h4>Direction of Movement</h4>
+                <select id="direction-filter">
+                    <option value="">All Directions</option>
+                    <option value="Incoming">Incoming</option>
+                    <option value="Outgoing">Outgoing</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <h4>Enumerator</h4>
+                <select id="enumerator-filter">
+                    <option value="">All Enumerators</option>
+                    <option value="435">Enumerator 435</option>
+                    <option value="152">Enumerator 152</option>
+                    <!-- More enumerators would be populated from data -->
+                </select>
+            </div>
+        </aside>
         
-        // Set initial UI states
-        isAnimationPlaying = true;
-        showFlows = true;
-        showPoints = true;
-        updateAnimationButton();
-        updateFlowsButton();
-        updatePointsButton();
+        <main class="main-content">
+            <div class="summary-cards">
+                <div class="card incoming">
+                    <h3>Total Incoming Individuals</h3>
+                    <div class="value">0</div>
+                    <small>Last 7 days</small>
+                </div>
+                
+                <div class="card outgoing">
+                    <h3>Total Outgoing Individuals</h3>
+                    <div class="value">510</div>
+                    <small>Last 7 days</small>
+                </div>
+                
+                <div class="card">
+                    <h3>Monitoring Points Active</h3>
+                    <div class="value">2</div>
+                    <small>Last 7 days</small>
+                </div>
+                
+                <div class="card">
+                    <h3>Data Collection Events</h3>
+                    <div class="value">3</div>
+                    <small>Last 7 days</small>
+                </div>
+            </div>
+            
+            <div class="data-visualization">
+                <div class="chart-container">
+                    <h3>Movement by Direction</h3>
+                    <div class="chart">
+                        <!-- This would be replaced with a chart library like Chart.js -->
+                        <p>Pie chart showing incoming vs outgoing movement</p>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Movement by Country</h3>
+                    <div class="chart">
+                        <!-- This would be replaced with a chart library like Chart.js -->
+                        <p>Bar chart showing movement by neighboring country</p>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Transportation Methods (Incoming)</h3>
+                    <div class="chart">
+                        <!-- This would be replaced with a chart library like Chart.js -->
+                        <p>Bar chart showing transport methods for incoming</p>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Transportation Methods (Outgoing)</h3>
+                    <div class="chart">
+                        <!-- This would be replaced with a chart library like Chart.js -->
+                        <p>Bar chart showing transport methods for outgoing</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="data-table">
+                <h3>Recent Data Collection Events</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Location</th>
+                            <th>Direction</th>
+                            <th>Neighboring Country</th>
+                            <th>Individuals</th>
+                            <th>Enumerator</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2025-05-22</td>
+                            <td>SD06135PB5</td>
+                            <td><span class="outgoing-badge">Outgoing</span></td>
+                            <td>Chad</td>
+                            <td>500</td>
+                            <td>152</td>
+                            <td><a href="#">View</a></td>
+                        </tr>
+                        <tr>
+                            <td>2025-05-22</td>
+                            <td>SD17014PB3</td>
+                            <td><span class="incoming-badge">Incoming</span></td>
+                            <td>Egypt</td>
+                            <td>0</td>
+                            <td>435</td>
+                            <td><a href="#">View</a></td>
+                        </tr>
+                        <tr>
+                            <td>2025-05-18</td>
+                            <td>SD17014PB3</td>
+                            <td><span class="outgoing-badge">Outgoing</span></td>
+                            <td>Egypt</td>
+                            <td>10</td>
+                            <td>Enumerator</td>
+                            <td><a href="#">View</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // This would contain JavaScript to:
+        // 1. Fetch data from KoBo API
+        // 2. Filter and process the data
+        // 3. Update charts and tables dynamically
+        // 4. Handle filter changes
         
-        // Highlight paths on mouseover
-        flowmapLayer.on('mouseover', (e) => {
-          if (e.sharedOriginFeatures.length) {
-            flowmapLayer.selectFeaturesForPathDisplay(e.sharedOriginFeatures, 'SELECTION_NEW');
-          }
-          if (e.sharedDestinationFeatures.length) {
-            flowmapLayer.selectFeaturesForPathDisplay(e.sharedDestinationFeatures, 'SELECTION_NEW');
-          }
+        // Example of how you might initialize filters
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default dates
+            const today = new Date();
+            document.getElementById('end-date').valueAsDate = today;
+            
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 7);
+            document.getElementById('start-date').valueAsDate = weekAgo;
+            
+            // Hide custom date inputs by default
+            document.getElementById('start-date').style.display = 'none';
+            document.getElementById('end-date').style.display = 'none';
+            
+            // Show custom date inputs when selected
+            document.getElementById('time-period').addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    document.getElementById('start-date').style.display = 'inline-block';
+                    document.getElementById('end-date').style.display = 'inline-block';
+                } else {
+                    document.getElementById('start-date').style.display = 'none';
+                    document.getElementById('end-date').style.display = 'none';
+                }
+            });
+            
+            // Filter logic would go here
+            // This would involve fetching data and updating the UI
         });
-        
-        // Select initial feature for path display (Khartoum)
-        flowmapLayer.selectFeaturesForPathDisplayById('s_state_id', "SD15", true, 'SELECTION_NEW');
-      }
-      
-      // Add tooltip and popup to features
-      function addTooltip(feature, layer) {
-        const tooltipContent = feature.properties.isOrigin
-          ? `Displacement From: ${feature.properties.s_State}`
-          : `Displacement To: ${feature.properties.e_locality}`;
-        
-        layer.bindTooltip(tooltipContent);
-        layer.on('mouseover', () => layer.openTooltip());
-        layer.on('mouseout', () => layer.closeTooltip());
-        
-        // Add popup with more detailed information
-        const popupContent = feature.properties.isOrigin
-          ? `<div style="min-width: 200px;">
-               <h4 style="margin: 0 0 10px; color: #2a5885;">Displacement Origin</h4>
-               <p><strong>State:</strong> ${feature.properties.s_State}</p>
-               <p><strong>Total Displaced:</strong> ${feature.properties.s_total_displaced ? feature.properties.s_total_displaced.toLocaleString() : 'N/A'}</p>
-               <p><small>Click to view destination flows</small></p>
-             </div>`
-          : `<div style="min-width: 200px;">
-               <h4 style="margin: 0 0 10px; color: #2a5885;">Displacement Destination</h4>
-               <p><strong>Location:</strong> ${feature.properties.e_locality}</p>
-               <p><strong>Total Displaced Population:</strong> ${feature.properties.e_Volume ? feature.properties.e_Volume.toLocaleString() : 'N/A'}</p>
-               <p><strong>Main Needs:</strong> ${feature.properties.main_needs || 'Not specified'}</p>
-             </div>`;
-        
-        layer.bindPopup(popupContent);
-      }
-      
-      // Add legend
-      const legend = L.control({ position: 'bottomright' });
-      legend.onAdd = function() {
-        const div = L.DomUtil.create('div', 'legend');
-        div.innerHTML = `
-          <h4>IDP Flow Volume</h4>
-          <div style="display: flex; align-items: center; margin: 5px 0;">
-            <i style="background:#ffb81c"></i> <span>&lt; 50,000 IDPs</span>
-          </div>
-          <div style="display: flex; align-items: center; margin: 5px 0;">
-            <i style="background:#ff671f"></i> <span>50,000 - 100,000 IDPs</span>
-          </div>
-          <div style="display: flex; align-items: center; margin: 5px 0;">
-            <i style="background:#d22630"></i> <span>&gt; 100,000 IDPs</span>
-          </div>
-          <hr style="margin: 10px 0; border-color: #eee;">
-          <div style="display: flex; align-items: center; margin: 5px 0;">
-            <svg width="18" height="18" style="margin-right: 8px;">
-              <circle cx="9" cy="9" r="8" fill="#418FDE" stroke="#fff" stroke-width="1"/>
-            </svg>
-            <span>Destination Points</span>
-          </div>
-          <div style="display: flex; align-items: center; margin: 5px 0;">
-            <svg width="18" height="18" style="margin-right: 8px;">
-              <circle cx="9" cy="9" r="8" fill="rgb(255, 103, 31)" stroke="#fff" stroke-width="1"/>
-            </svg>
-            <span>Origin Points</span>
-          </div>
-        `;
-        return div;
-      };
-      legend.addTo(map);
-    });
-  </script>
+    </script>
 </body>
 </html>
