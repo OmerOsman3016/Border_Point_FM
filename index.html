@@ -1,851 +1,647 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DTM Sudan - Flow Monitoring Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-        }
-        .dashboard-header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px 0;
-            margin-bottom: 30px;
-        }
-        .card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            transition: transform 0.3s;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .card-header {
-            background-color: #3498db;
-            color: white;
-            border-radius: 10px 10px 0 0 !important;
-            font-weight: bold;
-        }
-        .stat-card {
-            text-align: center;
-            padding: 15px;
-        }
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .stat-label {
-            font-size: 1rem;
-            color: #7f8c8d;
-        }
-        #map {
-            height: 400px;
-            border-radius: 10px;
-        }
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-        .filter-section {
-            background-color: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-        .data-table {
-            background-color: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .table-responsive {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Sudan | IDPs Pathways Across Sudan</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Custom CSS -->
+  <style>
+  body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden; /* Prevent scroll */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.header {
+  text-align: center;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+h1 {
+  color: #2a5885;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 1.1em;
+}
+
+.map-container {
+  flex: 1;
+  position: relative;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+.legend {
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 5px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.legend h4 {
+  margin: 0 0 10px;
+  color: #2a5885;
+}
+
+.legend i {
+  width: 18px;
+  height: 3px;
+  float: left;
+  margin-right: 8px;
+  opacity: 0.9;
+}
+
+.map-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+
+.control-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+  padding: 5px 10px;
+  background: #2a5885;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.control-btn:hover {
+  background: #3a6ea5;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #2a5885;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.info-panel {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  max-width: 300px;
+  font-size: 14px;
+}
+
+.info-panel h3 {
+  margin-top: 0;
+  color: #2a5885;
+}
+
+.info-panel p {
+  margin-bottom: 10px;
+}
+
+.info-panel .close-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 10px;
+  }
+
+  .header {
+    padding: 15px;
+  }
+
+  .info-panel {
+    max-width: 200px;
+    font-size: 12px;
+    padding: 10px;
+  }
+}
+
+  </style>
 </head>
+
 <body>
-    <div class="dashboard-header">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-8">
-                    <h1><i class="bi bi-people-fill"></i> DTM Sudan - Flow Monitoring Dashboard</h1>
-                    <p class="lead">Visualization of population movements across monitoring points</p>
-                </div>
-                <div class="col-md-4 text-end">
-                    <div class="dropdown">
-                        <button class="btn btn-light dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-download"></i> Export
-                        </button>
-                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
-                            <li><a class="dropdown-item" href="#" id="exportPNG">PNG Image</a></li>
-                            <li><a class="dropdown-item" href="#" id="exportPDF">PDF Report</a></li>
-                            <li><a class="dropdown-item" href="#" id="exportCSV">CSV Data</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+    <div class="map-container">
+      <div id="map"></div>
+      
+      <!-- Loading overlay -->
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div>Loading displacement data...</div>
+      </div>
+      
+      <!-- Map controls -->
+      <div class="map-controls">
+        <button class="control-btn" id="reset-view">
+          <i class="fas fa-globe-africa"></i> Reset View
+        </button>
+        <button class="control-btn" id="toggle-animation">
+          <i class="fas fa-play" id="animation-icon"></i> <span id="animation-text">Play</span>
+        </button>
+        <button class="control-btn" id="toggle-flows">
+          <i class="fas fa-wave-square"></i> <span id="flows-text">Show Flows</span>
+        </button>
+        <button class="control-btn" id="toggle-points">
+          <i class="fas fa-map-marker-alt"></i> <span id="points-text">Show Points</span>
+        </button>
+      </div>
+      
+      <!-- Info panel -->
+      <div class="info-panel" id="info-panel">
+        <button class="close-btn" id="close-info">&times;</button>
+        <h3>How to use this map</h3>
+        <p><strong>Click</strong> on any flow line or point to see detailed information about that displacement pathway.</p>
+        <p><strong>Hover</strong> over elements to see quick details.</p>
+        <p>Use the <strong>controls</strong> in the top right to adjust what's displayed.</p>
+      </div>
     </div>
+  </div>
 
-    <div class="container">
-        <!-- Filters -->
-        <div class="filter-section mb-4">
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="dateRange" class="form-label">Date Range</label>
-                    <select class="form-select" id="dateRange">
-                        <option value="all">All Dates</option>
-                        <option value="week">Last 7 Days</option>
-                        <option value="month">Last 30 Days</option>
-                        <option value="custom">Custom Range</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="directionFilter" class="form-label">Movement Direction</label>
-                    <select class="form-select" id="directionFilter">
-                        <option value="all">All Directions</option>
-                        <option value="Incoming">Incoming</option>
-                        <option value="Outgoing">Outgoing</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="stateFilter" class="form-label">State</label>
-                    <select class="form-select" id="stateFilter">
-                        <option value="all">All States</option>
-                        <!-- Will be populated by JavaScript -->
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="transportFilter" class="form-label">Transport Mode</label>
-                    <select class="form-select" id="transportFilter">
-                        <option value="all">All Modes</option>
-                        <option value="By foot">By foot</option>
-                        <option value="Passenger car">Passenger car</option>
-                        <option value="Taxi">Taxi</option>
-                        <option value="Bus">Bus</option>
-                        <option value="Min-Bus">Min-Bus</option>
-                        <option value="Truck">Truck</option>
-                    </select>
-                </div>
-            </div>
-            <div class="row mt-3" id="customDateRange" style="display: none;">
-                <div class="col-md-6">
-                    <label for="startDate" class="form-label">Start Date</label>
-                    <input type="date" class="form-control" id="startDate">
-                </div>
-                <div class="col-md-6">
-                    <label for="endDate" class="form-label">End Date</label>
-                    <input type="date" class="form-control" id="endDate">
-                </div>
-            </div>
-        </div>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  
+  <!-- Flowmap layer dependencies -->
+  <script src="https://unpkg.com/@tweenjs/tween.js@18.6.4/dist/tween.umd.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <script src="./src/CanvasFlowmapLayer.js"></script>
+  
+  <!-- Main script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize the map
+      const map = L.map('map').setView([16, 30], 5.5);
+      
+   // Replace the existing base layer definitions with these:
+const cartoDBLight1 = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+});
 
-        <!-- Summary Cards -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card stat-card">
-                    <div class="stat-value" id="totalMovements">0</div>
-                    <div class="stat-label">Total Movements</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card">
-                    <div class="stat-value" id="incomingCount">0</div>
-                    <div class="stat-label">Incoming</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card">
-                    <div class="stat-value" id="outgoingCount">0</div>
-                    <div class="stat-label">Outgoing</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card stat-card">
-                    <div class="stat-value" id="monitoringPoints">0</div>
-                    <div class="stat-label">Monitoring Points</div>
-                </div>
-            </div>
-        </div>
+const openStreetMap1 = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+});
 
-        <!-- Main Content -->
-        <div class="row">
-            <!-- Left Column -->
-            <div class="col-md-8">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-map"></i> Movement Map
-                    </div>
-                    <div class="card-body">
-                        <div id="map"></div>
-                    </div>
-                </div>
+const esriWorldImagery1 = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
+});
 
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-graph-up"></i> Movements Over Time
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="timeSeriesChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
+const stamenToner1 = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
+  attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>'
+});
 
-            <!-- Right Column -->
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-pie-chart"></i> Movement Direction
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="directionChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+const mapboxLight = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    tileSize: 512,
+    zoomOffset: -1,
+    maxZoom: 18
+});
 
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-bar-chart"></i> Transportation Modes
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="transportChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+const mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    tileSize: 512,
+    zoomOffset: -1,
+    maxZoom: 18
+});
 
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="bi bi-people"></i> Demographics
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="demographicsChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+const mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    tileSize: 512,
+    zoomOffset: -1,
+    maxZoom: 18
+});
 
-        <!-- Data Table -->
-        <div class="card">
-            <div class="card-header">
-                <i class="bi bi-table"></i> Raw Data
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="dataTable">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>State</th>
-                                <th>Locality</th>
-                                <th>Direction</th>
-                                <th>Transport</th>
-                                <th>People</th>
-                                <th>Male</th>
-                                <th>Female</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            <!-- Will be populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+const mapboxOutdoors = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    tileSize: 512,
+    zoomOffset: -1,
+    maxZoom: 18
+});
+    const mapboxCustom1 = L.tileLayer('https://api.mapbox.com/styles/v1/omerosman/cm8oy6is4006101si7ll3bs4h/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        tileSize: 512,
+        zoomOffset: -1,
+        maxZoom: 18
+    });
+// Add default base layer to the map
+mapboxCustom1.addTo(map);
 
-    <footer class="mt-5 py-3 bg-light">
-        <div class="container text-center">
-            <p class="mb-0">DTM Sudan Flow Monitoring Dashboard &copy; 2023</p>
-        </div>
-    </footer>
+// Add layer control to the map
+const baseLayers = {
+  "Mapbox Light": mapboxLight,
+  "Mapbox Streets": mapboxStreets,
+  "Mapbox Outdoors": mapboxOutdoors,
+  "Mapbox Satellite": mapboxSatellite,
+  "CartoDB Light": cartoDBLight1,
+  "OpenStreetMap": openStreetMap1,
+  "Esri World Imagery": esriWorldImagery1,
+  "Stamen Toner": stamenToner1,
+  "Mapbox Custom": mapboxCustom1
+};
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        // Global variables
-        let rawData = [];
-        let filteredData = [];
-        let directionChart, transportChart, demographicsChart, timeSeriesChart;
-        let map;
-        let mapMarkers = [];
-
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load data
-            loadData();
-            
-            // Initialize map
-            initMap();
-            
-            // Set up event listeners
-            setupEventListeners();
-        });
-
-        // Load data from CSV
-        function loadData() {
-            // In a real implementation, you would load from an actual CSV file
-            // For this example, we'll use the sample data from the Excel file
-            
-            // Sample data based on the Excel file provided
-            const sampleData = [
-                {
-                    "Date of Interview": "2025-05-18 00:00:00",
-                    "State": "SD17",
-                    "locality": "SD17014",
-                    "Flow Monitoring Point": "SD17014PB3",
-                    "Enumerator Name": "Enumerator",
-                    "Neighbouring country": "Egypt",
-                    "Direction of Movement": "Outgoing",
-                    "By foot: Number of people": "10",
-                    "Passenger car: Number of Vehicles": "0",
-                    "Passenger car: Number of people": "0",
-                    "Taxi: Number of Vehicles": "0",
-                    "Taxi: Number of people": "0",
-                    "Bus: Number of Vehicles": "0",
-                    "Bus: Number of people": "0",
-                    "Min-Bus: Number of Vehicles": "0",
-                    "Min-Bus: Number of people": "0",
-                    "Male": "5",
-                    "Female": "5",
-                    "_GPS Coordinates_latitude": "21.999201",
-                    "_GPS Coordinates_longitude": "31.153584"
-                },
-                {
-                    "Date of Interview": "2025-05-22 00:00:00",
-                    "State": "SD17",
-                    "locality": "SD17014",
-                    "Flow Monitoring Point": "SD17014PB3",
-                    "Enumerator Name": "435",
-                    "Neighbouring country": "Egypt",
-                    "Direction of Movement": "Incoming",
-                    "By foot: Number of people": "0",
-                    "Passenger car: Number of Vehicles": "0",
-                    "Passenger car: Number of people": "0",
-                    "Taxi: Number of Vehicles": "0",
-                    "Taxi: Number of people": "0",
-                    "Bus: Number of Vehicles": "0",
-                    "Bus: Number of people": "0",
-                    "Min-Bus: Number of Vehicles": "0",
-                    "Min-Bus: Number of people": "0",
-                    "Male": "0",
-                    "Female": "0",
-                    "_GPS Coordinates_latitude": "",
-                    "_GPS Coordinates_longitude": ""
-                },
-                {
-                    "Date of Interview": "2025-05-22 00:00:00",
-                    "State": "SD06",
-                    "locality": "SD06135",
-                    "Flow Monitoring Point": "SD06135PB5",
-                    "Enumerator Name": "152",
-                    "Neighbouring country": "Chad",
-                    "Direction of Movement": "Outgoing",
-                    "By foot: Number of people": "500",
-                    "Passenger car: Number of Vehicles": "0",
-                    "Passenger car: Number of people": "0",
-                    "Taxi: Number of Vehicles": "0",
-                    "Taxi: Number of people": "0",
-                    "Bus: Number of Vehicles": "0",
-                    "Bus: Number of people": "0",
-                    "Min-Bus: Number of Vehicles": "0",
-                    "Min-Bus: Number of people": "0",
-                    "Male": "500",
-                    "Female": "0",
-                    "_GPS Coordinates_latitude": "19.5916762",
-                    "_GPS Coordinates_longitude": "37.2194469"
-                }
-            ];
-
-            rawData = sampleData;
-            filteredData = [...rawData];
-            
-            // Process the data
-            processData();
-            
-            // Update the dashboard
-            updateDashboard();
+L.control.layers(baseLayers).addTo(map);
+      
+      // State boundaries layer (for reference)
+      let stateBoundariesLayer;
+      
+      // Flowmap layer variables
+      let flowmapLayer;
+      let isAnimationPlaying = false;
+      let showFlows = true;
+      let showPoints = true;
+      
+      // Load data and initialize visualization
+      loadData();
+      
+      // UI event handlers
+      document.getElementById('reset-view').addEventListener('click', function() {
+        map.setView([16, 30], 5.5);
+      });
+      
+      document.getElementById('toggle-animation').addEventListener('click', function() {
+        isAnimationPlaying = !isAnimationPlaying;
+        
+        if (flowmapLayer) {
+          flowmapLayer.setAnimationStarted(isAnimationPlaying);
+          updateAnimationButton();
         }
-
-        // Initialize the map
-        function initMap() {
-            // Center on Sudan
-            map = L.map('map').setView([15.5, 30.0], 6);
-            
-            // Add base tiles
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      });
+      
+      document.getElementById('toggle-flows').addEventListener('click', function() {
+        showFlows = !showFlows;
+        
+        if (flowmapLayer) {
+          flowmapLayer.setPathDisplayMode(showFlows ? 'all' : 'none');
+          updateFlowsButton();
+        }
+      });
+      
+      document.getElementById('toggle-points').addEventListener('click', function() {
+        showPoints = !showPoints;
+        
+        if (flowmapLayer) {
+          flowmapLayer.setPointVisibility(showPoints);
+          updatePointsButton();
+        }
+      });
+      
+      document.getElementById('close-info').addEventListener('click', function() {
+        document.getElementById('info-panel').style.display = 'none';
+      });
+      
+      // Update button states
+      function updateAnimationButton() {
+        const icon = document.getElementById('animation-icon');
+        const text = document.getElementById('animation-text');
+        
+        if (isAnimationPlaying) {
+          icon.className = 'fas fa-pause';
+          text.textContent = 'Pause';
+        } else {
+          icon.className = 'fas fa-play';
+          text.textContent = 'Play';
+        }
+      }
+      
+      function updateFlowsButton() {
+        const text = document.getElementById('flows-text');
+        text.textContent = showFlows ? 'Hide Flows' : 'Show Flows';
+      }
+      
+      function updatePointsButton() {
+        const text = document.getElementById('points-text');
+        text.textContent = showPoints ? 'Hide Points' : 'Show Points';
+      }
+      
+      // Load and process data
+      function loadData() {
+        // Load state boundaries (GeoJSON)
+        fetch('./data/sudan_states.geojson')
+          .then(response => response.json())
+          .then(data => {
+            stateBoundariesLayer = L.geoJSON(data, {
+              style: {
+                color: '#555',
+                weight: 1,
+                opacity: 0.7,
+                fillOpacity: 0.1
+              }
             }).addTo(map);
-        }
-
-        // Set up event listeners
-        function setupEventListeners() {
-            // Filter controls
-            document.getElementById('dateRange').addEventListener('change', function() {
-                if (this.value === 'custom') {
-                    document.getElementById('customDateRange').style.display = 'flex';
-                } else {
-                    document.getElementById('customDateRange').style.display = 'none';
-                    applyFilters();
-                }
-            });
+          })
+          .catch(error => {
+            console.error('Error loading state boundaries:', error);
+          });
+        
+        // Load displacement data (CSV)
+        Papa.parse('./data/IDPs_Pathway.csv', {
+          download: true,
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            // Process the data to ensure displacement destination equals sum of e_Volume by e_locality_id
+            const processedData = processData(results.data);
+            initializeFlowmap(processedData);
+            document.getElementById('loading-overlay').style.display = 'none';
+          },
+          error: function(error) {
+            console.error('Error loading displacement data:', error);
+            document.getElementById('loading-overlay').innerHTML = 
+              '<div style="color: red; text-align: center;">Error loading data. Please try again later.</div>';
+          }
+        });
+      }
+      
+      // Process data to ensure displacement destination equals sum of e_Volume by e_locality_id
+      function processData(data) {
+        // Group data by e_locality_id and calculate total volume for each destination
+        const destinationVolumes = {};
+        
+        data.forEach(item => {
+          const localityId = item.e_locality_id;
+          const volume = parseFloat(item.e_Volume) || 0;
+          
+          if (!destinationVolumes[localityId]) {
+            destinationVolumes[localityId] = {
+              totalVolume: 0,
+              items: []
+            };
+          }
+          
+          destinationVolumes[localityId].totalVolume += volume;
+          destinationVolumes[localityId].items.push(item);
+        });
+        
+        // Update each item's e_Volume to be the total volume for its destination
+        const processedData = [];
+        
+        Object.keys(destinationVolumes).forEach(localityId => {
+          const destination = destinationVolumes[localityId];
+          const totalVolume = destination.totalVolume;
+          
+          destination.items.forEach(item => {
+            // Update the e_Volume to be the total for this destination
+            item.e_Volume = totalVolume;
+            processedData.push(item);
+          });
+        });
+        
+        return processedData;
+      }
+      
+      // Initialize flowmap visualization
+      function initializeFlowmap(data) {
+        // Convert CSV data to GeoJSON format
+        const geoJsonFeatureCollection = {
+          type: 'FeatureCollection',
+          features: data.map(datum => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [datum.s_lon, datum.s_lat] },
+            properties: datum
+          }))
+        };
+        
+        // Create flowmap layer
+        flowmapLayer = L.canvasFlowmapLayer(geoJsonFeatureCollection, {
+          originAndDestinationFieldIds: {
+            originUniqueIdField: 's_state_id',
+            originGeometry: { x: 's_lon', y: 's_lat' },
+            destinationUniqueIdField: 'e_locality_id',
+            destinationGeometry: { x: 'e_lon', y: 'e_lat' }
+          },
+          style: (feature) => {
+            const baseRadius = 10;
+            const maxRadius = 6;
+            const volume = feature.properties.e_Volume || 0;
             
-            document.getElementById('startDate').addEventListener('change', applyFilters);
-            document.getElementById('endDate').addEventListener('change', applyFilters);
+            // Different styles for origin and destination points
+            const radius = feature.properties.isOrigin
+              ? baseRadius
+              : Math.min(baseRadius + (volume / 5000), maxRadius);
             
-            document.getElementById('directionFilter').addEventListener('change', applyFilters);
-            document.getElementById('stateFilter').addEventListener('change', applyFilters);
-            document.getElementById('transportFilter').addEventListener('change', applyFilters);
-            
-            // Export buttons
-            document.getElementById('exportPNG').addEventListener('click', exportAsPNG);
-            document.getElementById('exportPDF').addEventListener('click', exportAsPDF);
-            document.getElementById('exportCSV').addEventListener('click', exportAsCSV);
-        }
-
-        // Process the raw data
-        function processData() {
-            // Populate state filter
-            const states = [...new Set(rawData.map(item => item.State))];
-            const stateFilter = document.getElementById('stateFilter');
-            
-            states.forEach(state => {
-                if (state) {
-                    const option = document.createElement('option');
-                    option.value = state;
-                    option.textContent = state;
-                    stateFilter.appendChild(option);
-                }
-            });
-        }
-
-        // Apply filters to the data
-        function applyFilters() {
-            filteredData = [...rawData];
-            
-            // Date filter
-            const dateRange = document.getElementById('dateRange').value;
-            if (dateRange !== 'all') {
-                const now = new Date();
-                let cutoffDate;
-                
-                if (dateRange === 'week') {
-                    cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                } else if (dateRange === 'month') {
-                    cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                } else if (dateRange === 'custom') {
-                    const startDate = document.getElementById('startDate').value;
-                    const endDate = document.getElementById('endDate').value;
-                    
-                    if (startDate && endDate) {
-                        filteredData = filteredData.filter(item => {
-                            const itemDate = new Date(item['Date of Interview'].split(' ')[0]);
-                            const start = new Date(startDate);
-                            const end = new Date(endDate);
-                            return itemDate >= start && itemDate <= end;
-                        });
-                    }
-                }
-                
-                if (dateRange === 'week' || dateRange === 'month') {
-                    filteredData = filteredData.filter(item => {
-                        const itemDate = new Date(item['Date of Interview'].split(' ')[0]);
-                        return itemDate >= cutoffDate;
-                    });
-                }
+            return {
+              radius: radius,
+              weight: 1,
+              color: '#fff',
+              fillColor: feature.properties.isOrigin ? '#ff671f' : '#418FDE',
+              fillOpacity: feature.properties.isOrigin ? 0.8 : 0.7
+            };
+          },
+          canvasBezierStyle: {
+            type: 'classBreaks',
+            field: 'e_Volume',
+            classBreakInfos: [
+              { 
+                classMinValue: 1, 
+                classMaxValue: 80000, 
+                symbol: { 
+                  strokeStyle: '#ffb81c', 
+                  lineWidth: 0.5, 
+                  lineCap: 'round', 
+                  shadowColor: '#fee8c8', 
+                  shadowBlur: 2.0 
+                } 
+              },
+              { 
+                classMinValue: 80001, 
+                classMaxValue: 1000000, 
+                symbol: { 
+                  strokeStyle: '#ff671f', 
+                  lineWidth: 1.5, 
+                  lineCap: 'round', 
+                  shadowColor: '#fdbb84', 
+                  shadowBlur: 2.0 
+                } 
+              },
+              { 
+                classMinValue: 1000001, 
+                classMaxValue: 160000, 
+                symbol: { 
+                  strokeStyle: '#d22630', 
+                  lineWidth: 3, 
+                  lineCap: 'round', 
+                  shadowColor: '#e34a33', 
+                  shadowBlur: 2.0 
+                } 
+              }
+            ],
+            defaultSymbol: { 
+              strokeStyle: '#e7e1ef', 
+              lineWidth: 0.5, 
+              lineCap: 'round', 
+              shadowColor: '#e7e1ef', 
+              shadowBlur: 1.5 
             }
-            
-            // Direction filter
-            const direction = document.getElementById('directionFilter').value;
-            if (direction !== 'all') {
-                filteredData = filteredData.filter(item => item['Direction of Movement'] === direction);
-            }
-            
-            // State filter
-            const state = document.getElementById('stateFilter').value;
-            if (state !== 'all') {
-                filteredData = filteredData.filter(item => item.State === state);
-            }
-            
-            // Transport filter
-            const transport = document.getElementById('transportFilter').value;
-            if (transport !== 'all') {
-                filteredData = filteredData.filter(item => {
-                    const people = parseInt(item[`${transport}: Number of people`] || 0);
-                    return people > 0;
-                });
-            }
-            
-            // Update the dashboard with filtered data
-            updateDashboard();
-        }
-
-        // Update all dashboard components
-        function updateDashboard() {
-            updateSummaryCards();
-            updateCharts();
-            updateMap();
-            updateDataTable();
-        }
-
-        // Update summary cards
-        function updateSummaryCards() {
-            // Total movements
-            const totalMovements = filteredData.reduce((sum, item) => {
-                const byFoot = parseInt(item['By foot: Number of people'] || 0);
-                const passengerCar = parseInt(item['Passenger car: Number of people'] || 0);
-                const taxi = parseInt(item['Taxi: Number of people'] || 0);
-                const bus = parseInt(item['Bus: Number of people'] || 0);
-                const minBus = parseInt(item['Min-Bus: Number of people'] || 0);
-                return sum + byFoot + passengerCar + taxi + bus + minBus;
-            }, 0);
-            
-            document.getElementById('totalMovements').textContent = totalMovements.toLocaleString();
-            
-            // Incoming/outgoing counts
-            const incomingCount = filteredData.filter(item => item['Direction of Movement'] === 'Incoming').length;
-            const outgoingCount = filteredData.filter(item => item['Direction of Movement'] === 'Outgoing').length;
-            
-            document.getElementById('incomingCount').textContent = incomingCount.toLocaleString();
-            document.getElementById('outgoingCount').textContent = outgoingCount.toLocaleString();
-            
-            // Monitoring points
-            const monitoringPoints = new Set(filteredData.map(item => item['Flow Monitoring Point'])).size;
-            document.getElementById('monitoringPoints').textContent = monitoringPoints.toLocaleString();
-        }
-
-        // Update charts
-        function updateCharts() {
-            // Direction chart
-            const incomingData = filteredData.filter(item => item['Direction of Movement'] === 'Incoming').length;
-            const outgoingData = filteredData.filter(item => item['Direction of Movement'] === 'Outgoing').length;
-            
-            if (directionChart) {
-                directionChart.data.datasets[0].data = [incomingData, outgoingData];
-                directionChart.update();
-            } else {
-                const directionCtx = document.getElementById('directionChart').getContext('2d');
-                directionChart = new Chart(directionCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Incoming', 'Outgoing'],
-                        datasets: [{
-                            data: [incomingData, outgoingData],
-                            backgroundColor: ['#3498db', '#e74c3c'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // Transport chart
-            const transportModes = ['By foot', 'Passenger car', 'Taxi', 'Bus', 'Min-Bus', 'Truck'];
-            const transportCounts = transportModes.map(mode => {
-                return filteredData.reduce((sum, item) => sum + (parseInt(item[`${mode}: Number of people`] || 0)), 0);
-            });
-            
-            if (transportChart) {
-                transportChart.data.datasets[0].data = transportCounts;
-                transportChart.update();
-            } else {
-                const transportCtx = document.getElementById('transportChart').getContext('2d');
-                transportChart = new Chart(transportCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: transportModes,
-                        datasets: [{
-                            label: 'Number of People',
-                            data: transportCounts,
-                            backgroundColor: [
-                                '#2ecc71', '#3498db', '#9b59b6', '#f1c40f', 
-                                '#e67e22', '#e74c3c', '#1abc9c', '#34495e'
-                            ],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // Demographics chart
-            const maleCount = filteredData.reduce((sum, item) => sum + (parseInt(item.Male || 0)), 0);
-            const femaleCount = filteredData.reduce((sum, item) => sum + (parseInt(item.Female || 0)), 0);
-            const sudaneseCount = filteredData.reduce((sum, item) => sum + (parseInt(item['Sudanese Displaced Individuals'] || 0)), 0);
-            const nonSudaneseCount = filteredData.reduce((sum, item) => sum + (parseInt(item['Non Sudanese Displaced Individuals'] || 0)), 0);
-            
-            if (demographicsChart) {
-                demographicsChart.data.datasets[0].data = [maleCount, femaleCount];
-                demographicsChart.data.datasets[1].data = [sudaneseCount, nonSudaneseCount];
-                demographicsChart.update();
-            } else {
-                const demoCtx = document.getElementById('demographicsChart').getContext('2d');
-                demographicsChart = new Chart(demoCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Gender', 'Nationality'],
-                        datasets: [
-                            {
-                                label: 'Male',
-                                data: [maleCount, 0],
-                                backgroundColor: '#3498db',
-                                borderWidth: 1
-                            },
-                            {
-                                label: 'Female',
-                                data: [femaleCount, 0],
-                                backgroundColor: '#e91e63',
-                                borderWidth: 1
-                            },
-                            {
-                                label: 'Sudanese',
-                                data: [0, sudaneseCount],
-                                backgroundColor: '#2ecc71',
-                                borderWidth: 1
-                            },
-                            {
-                                label: 'Non-Sudanese',
-                                data: [0, nonSudaneseCount],
-                                backgroundColor: '#f39c12',
-                                borderWidth: 1
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: {
-                                stacked: true
-                            },
-                            y: {
-                                stacked: false,
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // Time series chart
-            const dateCounts = {};
-            filteredData.forEach(item => {
-                const date = item['Date of Interview']?.split(' ')[0];
-                if (date) {
-                    dateCounts[date] = (dateCounts[date] || 0) + 1;
-                }
-            });
-            
-            const sortedDates = Object.keys(dateCounts).sort();
-            const timeSeriesLabels = sortedDates;
-            const timeSeriesData = sortedDates.map(date => dateCounts[date]);
-            
-            if (timeSeriesChart) {
-                timeSeriesChart.data.labels = timeSeriesLabels;
-                timeSeriesChart.data.datasets[0].data = timeSeriesData;
-                timeSeriesChart.update();
-            } else {
-                const timeSeriesCtx = document.getElementById('timeSeriesChart').getContext('2d');
-                timeSeriesChart = new Chart(timeSeriesCtx, {
-                    type: 'line',
-                    data: {
-                        labels: timeSeriesLabels,
-                        datasets: [{
-                            label: 'Movements per Day',
-                            data: timeSeriesData,
-                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                            borderColor: 'rgba(52, 152, 219, 1)',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        // Update the map with markers
-        function updateMap() {
-            // Clear existing markers
-            mapMarkers.forEach(marker => map.removeLayer(marker));
-            mapMarkers = [];
-            
-            // Add new markers for each data point with coordinates
-            filteredData.forEach(item => {
-                const lat = parseFloat(item['_GPS Coordinates_latitude'] || 0);
-                const lng = parseFloat(item['_GPS Coordinates_longitude'] || 0);
-                
-                if (lat && lng) {
-                    const byFoot = parseInt(item['By foot: Number of people'] || 0);
-                    const passengerCar = parseInt(item['Passenger car: Number of people'] || 0);
-                    const taxi = parseInt(item['Taxi: Number of people'] || 0);
-                    const bus = parseInt(item['Bus: Number of people'] || 0);
-                    const minBus = parseInt(item['Min-Bus: Number of people'] || 0);
-                    const totalPeople = byFoot + passengerCar + taxi + bus + minBus;
-                    
-                    // Determine marker color based on direction
-                    const color = item['Direction of Movement'] === 'Incoming' ? 'blue' : 'red';
-                    
-                    // Create a custom icon with the number of people
-                    const icon = L.divIcon({
-                        className: 'custom-marker',
-                        html: `<div style="background-color: ${color}; width: ${Math.min(30 + totalPeople/10, 60)}px; height: ${Math.min(30 + totalPeople/10, 60)}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid white;">${totalPeople}</div>`,
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
-                    });
-                    
-                    const marker = L.marker([lat, lng], { icon: icon })
-                        .bindPopup(`
-                            <b>${item['Flow Monitoring Point']}</b><br>
-                            <b>State:</b> ${item.State}<br>
-                            <b>Direction:</b> ${item['Direction of Movement']}<br>
-                            <b>Date:</b> ${item['Date of Interview'].split(' ')[0]}<br>
-                            <b>By foot:</b> ${byFoot}<br>
-                            <b>Passenger car:</b> ${passengerCar}<br>
-                            <b>Taxi:</b> ${taxi}<br>
-                            <b>Bus:</b> ${bus}<br>
-                            <b>Min-Bus:</b> ${minBus}
-                        `)
-                        .addTo(map);
-                    
-                    mapMarkers.push(marker);
-                }
-            });
-            
-            // Fit map to markers if there are any
-            if (mapMarkers.length > 0) {
-                const group = new L.featureGroup(mapMarkers);
-                map.fitBounds(group.getBounds(), { padding: [50, 50] });
-            } else {
-                // Default view if no markers
-                map.setView([15.5, 30.0], 6);
-            }
-        }
-
-        // Update the data table
-        function updateDataTable() {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            
-            filteredData.forEach(item => {
-                const row = document.createElement('tr');
-                
-                // Get transport mode with highest number of people
-                let mainTransport = 'By foot';
-                let maxPeople = parseInt(item['By foot: Number of people'] || 0);
-                
-                const transportModes = ['Passenger car', 'Taxi', 'Bus', 'Min-Bus', 'Truck'];
-                transportModes.forEach(mode => {
-                    const people = parseInt(item[`${mode}: Number of people`] || 0);
-                    if (people > maxPeople) {
-                        maxPeople = people;
-                        mainTransport = mode;
-                    }
-                });
-                
-                row.innerHTML = `
-                    <td>${item['Date of Interview'].split(' ')[0]}</td>
-                    <td>${item.State}</td>
-                    <td>${item.locality}</td>
-                    <td>${item['Direction of Movement']}</td>
-                    <td>${mainTransport}</td>
-                    <td>${maxPeople}</td>
-                    <td>${item.Male || 0}</td>
-                    <td>${item.Female || 0}</td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Export functions
-        function exportAsPNG() {
-            alert('PNG export functionality would be implemented here');
-            // In a real implementation, you would use html2canvas to capture the dashboard
-        }
-
-        function exportAsPDF() {
-            alert('PDF export functionality would be implemented here');
-            // In a real implementation, you would use jsPDF to generate a PDF
-        }
-
-        function exportAsCSV() {
-            // Convert filtered data to CSV
-            const headers = Object.keys(filteredData[0] || []);
-            const csvRows = [];
-            
-            // Add header row
-            csvRows.push(headers.join(','));
-            
-            // Add data rows
-            filteredData.forEach(row => {
-                const values = headers.map(header => {
-                    const escaped = ('' + (row[header] || '')).replace(/"/g, '\\"');
-                    return `"${escaped}"`;
-                });
-                csvRows.push(values.join(','));
-            });
-            
-            // Create download link
-            const csvContent = csvRows.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'dtm_sudan_flow_monitoring.csv';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    </script>
+          },
+          pathDisplayMode: 'all',
+          animationStarted: true,
+          animationEasingFamily: 'Linear',
+          animationEasingType: 'None',
+          animationDuration: 3000,
+          onEachFeature: addTooltip
+        }).addTo(map);
+        
+        // Set initial UI states
+        isAnimationPlaying = true;
+        showFlows = true;
+        showPoints = true;
+        updateAnimationButton();
+        updateFlowsButton();
+        updatePointsButton();
+        
+        // Highlight paths on mouseover
+        flowmapLayer.on('mouseover', (e) => {
+          if (e.sharedOriginFeatures.length) {
+            flowmapLayer.selectFeaturesForPathDisplay(e.sharedOriginFeatures, 'SELECTION_NEW');
+          }
+          if (e.sharedDestinationFeatures.length) {
+            flowmapLayer.selectFeaturesForPathDisplay(e.sharedDestinationFeatures, 'SELECTION_NEW');
+          }
+        });
+        
+        // Select initial feature for path display (Khartoum)
+        flowmapLayer.selectFeaturesForPathDisplayById('s_state_id', "SD15", true, 'SELECTION_NEW');
+      }
+      
+      // Add tooltip and popup to features
+      function addTooltip(feature, layer) {
+        const tooltipContent = feature.properties.isOrigin
+          ? `Displacement From: ${feature.properties.s_State}`
+          : `Displacement To: ${feature.properties.e_locality}`;
+        
+        layer.bindTooltip(tooltipContent);
+        layer.on('mouseover', () => layer.openTooltip());
+        layer.on('mouseout', () => layer.closeTooltip());
+        
+        // Add popup with more detailed information
+        const popupContent = feature.properties.isOrigin
+          ? `<div style="min-width: 200px;">
+               <h4 style="margin: 0 0 10px; color: #2a5885;">Displacement Origin</h4>
+               <p><strong>State:</strong> ${feature.properties.s_State}</p>
+               <p><strong>Total Displaced:</strong> ${feature.properties.s_total_displaced ? feature.properties.s_total_displaced.toLocaleString() : 'N/A'}</p>
+               <p><small>Click to view destination flows</small></p>
+             </div>`
+          : `<div style="min-width: 200px;">
+               <h4 style="margin: 0 0 10px; color: #2a5885;">Displacement Destination</h4>
+               <p><strong>Location:</strong> ${feature.properties.e_locality}</p>
+               <p><strong>Total Displaced Population:</strong> ${feature.properties.e_Volume ? feature.properties.e_Volume.toLocaleString() : 'N/A'}</p>
+               <p><strong>Main Needs:</strong> ${feature.properties.main_needs || 'Not specified'}</p>
+             </div>`;
+        
+        layer.bindPopup(popupContent);
+      }
+      
+      // Add legend
+      const legend = L.control({ position: 'bottomright' });
+      legend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'legend');
+        div.innerHTML = `
+          <h4>IDP Flow Volume</h4>
+          <div style="display: flex; align-items: center; margin: 5px 0;">
+            <i style="background:#ffb81c"></i> <span>&lt; 50,000 IDPs</span>
+          </div>
+          <div style="display: flex; align-items: center; margin: 5px 0;">
+            <i style="background:#ff671f"></i> <span>50,000 - 100,000 IDPs</span>
+          </div>
+          <div style="display: flex; align-items: center; margin: 5px 0;">
+            <i style="background:#d22630"></i> <span>&gt; 100,000 IDPs</span>
+          </div>
+          <hr style="margin: 10px 0; border-color: #eee;">
+          <div style="display: flex; align-items: center; margin: 5px 0;">
+            <svg width="18" height="18" style="margin-right: 8px;">
+              <circle cx="9" cy="9" r="8" fill="#418FDE" stroke="#fff" stroke-width="1"/>
+            </svg>
+            <span>Destination Points</span>
+          </div>
+          <div style="display: flex; align-items: center; margin: 5px 0;">
+            <svg width="18" height="18" style="margin-right: 8px;">
+              <circle cx="9" cy="9" r="8" fill="rgb(255, 103, 31)" stroke="#fff" stroke-width="1"/>
+            </svg>
+            <span>Origin Points</span>
+          </div>
+        `;
+        return div;
+      };
+      legend.addTo(map);
+    });
+  </script>
 </body>
 </html>
