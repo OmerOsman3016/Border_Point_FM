@@ -1,9 +1,9 @@
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Sudan | IDPs Pathways Across Sudan</title>
+  <title>Sudan | IDPs Pathways Dashboard</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -11,198 +11,510 @@
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <!-- Custom CSS -->
   <style>
-  body {
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  overflow: hidden; /* Prevent scroll */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f7fa;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-}
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-.container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  max-width: 100%;
-  padding: 0 20px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
+    .dashboard-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
 
-.header {
-  text-align: center;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  flex-shrink: 0;
-}
+    .sidebar {
+      width: 300px;
+      background-color: #2a5885;
+      color: white;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
 
-h1 {
-  color: #2a5885;
-  margin-bottom: 10px;
-}
+    .sidebar-header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 20px;
+    }
 
-.subtitle {
-  color: #666;
-  font-size: 1.1em;
-}
+    .sidebar h2 {
+      margin-top: 0;
+      font-size: 1.5em;
+    }
 
-.map-container {
-  flex: 1;
-  position: relative;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
+    .indicator-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+    }
 
-#map {
-  height: 100%;
-  width: 100%;
-}
+    .indicator-card:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
 
-.legend {
-  padding: 10px 15px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 5px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
-  line-height: 1.5;
-  font-size: 14px;
-}
+    .indicator-title {
+      font-size: 14px;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
 
-.legend h4 {
-  margin: 0 0 10px;
-  color: #2a5885;
-}
+    .indicator-value {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
 
-.legend i {
-  width: 18px;
-  height: 3px;
-  float: left;
-  margin-right: 8px;
-  opacity: 0.9;
-}
+    .indicator-change {
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+    }
 
-.map-controls {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
-}
+    .positive {
+      color: #4CAF50;
+    }
 
-.control-btn {
-  display: block;
-  width: 100%;
-  margin-bottom: 5px;
-  padding: 5px 10px;
-  background: #2a5885;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-}
+    .negative {
+      color: #F44336;
+    }
 
-.control-btn:hover {
-  background: #3a6ea5;
-}
+    .chart-container {
+      height: 150px;
+      margin-top: 10px;
+    }
 
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #2a5885;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 15px;
-}
+    .header {
+      padding: 15px 20px;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+    .header h1 {
+      color: #2a5885;
+      margin: 0;
+      font-size: 1.8em;
+    }
 
-.info-panel {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 15px;
-  border-radius: 5px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2);
-  max-width: 300px;
-  font-size: 14px;
-}
+    .header p {
+      color: #666;
+      margin: 5px 0 0;
+    }
 
-.info-panel h3 {
-  margin-top: 0;
-  color: #2a5885;
-}
+    .map-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-.info-panel p {
-  margin-bottom: 10px;
-}
+    .map-row {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
 
-.info-panel .close-btn {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: #666;
-}
+    #map {
+      flex: 2;
+      height: 100%;
+    }
 
-@media (max-width: 768px) {
-  .container {
-    padding: 0 10px;
-  }
+    .stats-panel {
+      flex: 1;
+      background: white;
+      overflow-y: auto;
+      padding: 15px;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    }
 
-  .header {
-    padding: 15px;
-  }
+    .stats-section {
+      margin-bottom: 20px;
+    }
 
-  .info-panel {
-    max-width: 200px;
-    font-size: 12px;
-    padding: 10px;
-  }
-}
+    .stats-section h3 {
+      color: #2a5885;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+      margin-top: 0;
+    }
 
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-item {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-weight: bold;
+      font-size: 18px;
+      color: #2a5885;
+    }
+
+    .legend {
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .legend h4 {
+      margin: 0 0 10px;
+      color: #2a5885;
+    }
+
+    .legend i {
+      width: 18px;
+      height: 3px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.9;
+    }
+
+    .map-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+
+    .control-btn {
+      display: block;
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 5px 10px;
+      background: #2a5885;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .control-btn:hover {
+      background: #3a6ea5;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #2a5885;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .info-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      max-width: 300px;
+      font-size: 14px;
+    }
+
+    .info-panel h3 {
+      margin-top: 0;
+      color: #2a5885;
+    }
+
+    .info-panel p {
+      margin-bottom: 10px;
+    }
+
+    .info-panel .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .time-slider {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px 15px;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      width: 300px;
+    }
+
+    .time-slider input {
+      width: 100%;
+    }
+
+    .time-display {
+      text-align: center;
+      margin-top: 5px;
+      font-weight: bold;
+      color: #2a5885;
+    }
+
+    @media (max-width: 1200px) {
+      .dashboard-container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: auto;
+        height: 200px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-direction: row;
+        padding: 10px;
+      }
+      
+      .indicator-card {
+        min-width: 200px;
+        margin-right: 10px;
+        margin-bottom: 0;
+      }
+      
+      .map-row {
+        flex-direction: column;
+      }
+      
+      #map {
+        height: 60vh;
+      }
+      
+      .stats-panel {
+        height: 40vh;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        height: 150px;
+      }
+      
+      .indicator-card {
+        min-width: 160px;
+        padding: 10px;
+      }
+      
+      .indicator-value {
+        font-size: 18px;
+      }
+      
+      .time-slider {
+        width: 250px;
+        bottom: 10px;
+      }
+    }
   </style>
 </head>
 
 <body>
-
-    <div class="map-container">
-      <div id="map"></div>
+  <div class="dashboard-container">
+    <!-- Sidebar with indicators -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>Sudan IDPs Dashboard</h2>
+        <p>Real-time displacement monitoring</p>
+      </div>
+      
+      <div class="indicator-card">
+        <div class="indicator-title">Total Displaced Persons</div>
+        <div class="indicator-value">6,800,000</div>
+        <div class="indicator-change positive">
+          <i class="fas fa-arrow-up"></i> 12% increase (last 30 days)
+        </div>
+        <div class="chart-container">
+          <canvas id="totalDisplacedChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="indicator-card">
+        <div class="indicator-title">New Displacements (30 days)</div>
+        <div class="indicator-value">420,000</div>
+        <div class="indicator-change negative">
+          <i class="fas fa-arrow-up"></i> 8% increase
+        </div>
+        <div class="chart-container">
+          <canvas id="newDisplacementsChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="indicator-card">
+        <div class="indicator-title">Cross-Border Refugees</div>
+        <div class="indicator-value">1,200,000</div>
+        <div class="indicator-change positive">
+          <i class="fas fa-arrow-up"></i> 5% increase
+        </div>
+        <div class="chart-container">
+          <canvas id="refugeesChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="indicator-card">
+        <div class="indicator-title">Humanitarian Access</div>
+        <div class="indicator-value">62%</div>
+        <div class="indicator-change negative">
+          <i class="fas fa-arrow-down"></i> 15% decrease
+        </div>
+        <div class="chart-container">
+          <canvas id="accessChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="indicator-card">
+        <div class="indicator-title">Priority Needs</div>
+        <div class="indicator-value">Food (78%)</div>
+        <div class="indicator-change">
+          Shelter (65%), Water (59%)
+        </div>
+        <div class="chart-container">
+          <canvas id="needsChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="main-content">
+      <div class="header">
+        <h1>IDPs Pathways Across Sudan</h1>
+        <p>Visualizing internal displacement flows and patterns</p>
+      </div>
+      
+      <div class="map-container">
+        <div class="map-row">
+          <div id="map"></div>
+          <div class="stats-panel">
+            <div class="stats-section">
+              <h3>Current Selection</h3>
+              <div id="selection-stats">
+                <p>Click on a location to view detailed statistics</p>
+              </div>
+            </div>
+            
+            <div class="stats-section">
+              <h3>Top Displacement Routes</h3>
+              <div id="top-routes">
+                <ol>
+                  <li>Khartoum → Madani (320,000)</li>
+                  <li>Khartoum → Port Sudan (180,000)</li>
+                  <li>Darfur → Chad (150,000)</li>
+                  <li>Khartoum → Gedaref (120,000)</li>
+                  <li>Kordofan → White Nile (95,000)</li>
+                </ol>
+              </div>
+            </div>
+            
+            <div class="stats-section">
+              <h3>Vulnerability Indicators</h3>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div>Children Displaced</div>
+                  <div class="stat-value">2.1M</div>
+                </div>
+                <div class="stat-item">
+                  <div>Women Displaced</div>
+                  <div class="stat-value">2.9M</div>
+                </div>
+                <div class="stat-item">
+                  <div>Elderly Displaced</div>
+                  <div class="stat-value">420K</div>
+                </div>
+                <div class="stat-item">
+                  <div>Persons with Disabilities</div>
+                  <div class="stat-value">180K</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="stats-section">
+              <h3>Response Coverage</h3>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div>Food Assistance</div>
+                  <div class="stat-value">58%</div>
+                </div>
+                <div class="stat-item">
+                  <div>Shelter Provided</div>
+                  <div class="stat-value">42%</div>
+                </div>
+                <div class="stat-item">
+                  <div>Medical Access</div>
+                  <div class="stat-value">65%</div>
+                </div>
+                <div class="stat-item">
+                  <div>Water Access</div>
+                  <div class="stat-value">71%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <!-- Loading overlay -->
       <div class="loading-overlay" id="loading-overlay">
@@ -224,15 +536,26 @@ h1 {
         <button class="control-btn" id="toggle-points">
           <i class="fas fa-map-marker-alt"></i> <span id="points-text">Show Points</span>
         </button>
+        <button class="control-btn" id="toggle-legend">
+          <i class="fas fa-layer-group"></i> <span id="legend-text">Hide Legend</span>
+        </button>
+      </div>
+      
+      <!-- Time slider -->
+      <div class="time-slider">
+        <input type="range" min="1" max="12" value="6" class="slider" id="timeSlider">
+        <div class="time-display">June 2023</div>
       </div>
       
       <!-- Info panel -->
       <div class="info-panel" id="info-panel">
         <button class="close-btn" id="close-info">&times;</button>
-        <h3>How to use this map</h3>
-        <p><strong>Click</strong> on any flow line or point to see detailed information about that displacement pathway.</p>
+        <h3>How to use this dashboard</h3>
+        <p><strong>Click</strong> on any flow line or point to see detailed information.</p>
         <p><strong>Hover</strong> over elements to see quick details.</p>
-        <p>Use the <strong>controls</strong> in the top right to adjust what's displayed.</p>
+        <p>Use the <strong>controls</strong> in the top right to adjust the visualization.</p>
+        <p>The <strong>sidebar</strong> shows key indicators and trends.</p>
+        <p>The <strong>right panel</strong> displays detailed statistics for selected areas.</p>
       </div>
     </div>
   </div>
@@ -248,76 +571,81 @@ h1 {
   <!-- Main script -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Initialize charts
+      initializeCharts();
+      
       // Initialize the map
       const map = L.map('map').setView([16, 30], 5.5);
       
-   // Replace the existing base layer definitions with these:
-const cartoDBLight1 = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-});
+      // Base layers
+      const cartoDBLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      });
 
-const openStreetMap1 = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-});
+      const openStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      });
 
-const esriWorldImagery1 = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
-});
+      const esriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
+      });
 
-const stamenToner1 = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
-  attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>'
-});
+      const stamenToner = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
+        attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>'
+      });
 
-const mapboxLight = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18
-});
+      const mapboxLight = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          tileSize: 512,
+          zoomOffset: -1,
+          maxZoom: 18
+      });
 
-const mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18
-});
+      const mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          tileSize: 512,
+          zoomOffset: -1,
+          maxZoom: 18
+      });
 
-const mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18
-});
+      const mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          tileSize: 512,
+          zoomOffset: -1,
+          maxZoom: 18
+      });
 
-const mapboxOutdoors = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 18
-});
-    const mapboxCustom1 = L.tileLayer('https://api.mapbox.com/styles/v1/omerosman/cm8oy6is4006101si7ll3bs4h/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        tileSize: 512,
-        zoomOffset: -1,
-        maxZoom: 18
-    });
-// Add default base layer to the map
-mapboxCustom1.addTo(map);
+      const mapboxOutdoors = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          tileSize: 512,
+          zoomOffset: -1,
+          maxZoom: 18
+      });
+      
+      const mapboxCustom = L.tileLayer('https://api.mapbox.com/styles/v1/omerosman/cm8oy6is4006101si7ll3bs4h/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
+          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          tileSize: 512,
+          zoomOffset: -1,
+          maxZoom: 18
+      });
 
-// Add layer control to the map
-const baseLayers = {
-  "Mapbox Light": mapboxLight,
-  "Mapbox Streets": mapboxStreets,
-  "Mapbox Outdoors": mapboxOutdoors,
-  "Mapbox Satellite": mapboxSatellite,
-  "CartoDB Light": cartoDBLight1,
-  "OpenStreetMap": openStreetMap1,
-  "Esri World Imagery": esriWorldImagery1,
-  "Stamen Toner": stamenToner1,
-  "Mapbox Custom": mapboxCustom1
-};
+      // Add default base layer to the map
+      mapboxCustom.addTo(map);
 
-L.control.layers(baseLayers).addTo(map);
+      // Add layer control to the map
+      const baseLayers = {
+        "Mapbox Light": mapboxLight,
+        "Mapbox Streets": mapboxStreets,
+        "Mapbox Outdoors": mapboxOutdoors,
+        "Mapbox Satellite": mapboxSatellite,
+        "CartoDB Light": cartoDBLight,
+        "OpenStreetMap": openStreetMap,
+        "Esri World Imagery": esriWorldImagery,
+        "Stamen Toner": stamenToner,
+        "Mapbox Custom": mapboxCustom
+      };
+
+      L.control.layers(baseLayers).addTo(map);
       
       // State boundaries layer (for reference)
       let stateBoundariesLayer;
@@ -327,6 +655,7 @@ L.control.layers(baseLayers).addTo(map);
       let isAnimationPlaying = false;
       let showFlows = true;
       let showPoints = true;
+      let showLegend = true;
       
       // Load data and initialize visualization
       loadData();
@@ -363,8 +692,30 @@ L.control.layers(baseLayers).addTo(map);
         }
       });
       
+      document.getElementById('toggle-legend').addEventListener('click', function() {
+        showLegend = !showLegend;
+        if (showLegend) {
+          legend.addTo(map);
+        } else {
+          map.removeControl(legend);
+        }
+        updateLegendButton();
+      });
+      
       document.getElementById('close-info').addEventListener('click', function() {
         document.getElementById('info-panel').style.display = 'none';
+      });
+      
+      // Time slider handler
+      document.getElementById('timeSlider').addEventListener('input', function(e) {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthIndex = parseInt(e.target.value) - 1;
+        document.querySelector('.time-display').textContent = `${months[monthIndex]} 2023`;
+        
+        // Here you would typically update the data shown based on the time period
+        // For now, we'll just simulate it
+        simulateTimeChange(monthIndex);
       });
       
       // Update button states
@@ -389,6 +740,180 @@ L.control.layers(baseLayers).addTo(map);
       function updatePointsButton() {
         const text = document.getElementById('points-text');
         text.textContent = showPoints ? 'Hide Points' : 'Show Points';
+      }
+      
+      function updateLegendButton() {
+        const text = document.getElementById('legend-text');
+        text.textContent = showLegend ? 'Hide Legend' : 'Show Legend';
+      }
+      
+      // Simulate time change (for demo purposes)
+      function simulateTimeChange(monthIndex) {
+        // Update indicator values based on month
+        const displacedValues = [5200000, 5400000, 5600000, 5800000, 6200000, 6800000, 
+                               7000000, 7200000, 7500000, 7800000, 8000000, 8200000];
+        const newDisplacedValues = [280000, 300000, 320000, 350000, 380000, 420000, 
+                                  450000, 480000, 500000, 520000, 540000, 560000];
+        
+        document.querySelectorAll('.indicator-value')[0].textContent = displacedValues[monthIndex].toLocaleString();
+        document.querySelectorAll('.indicator-value')[1].textContent = newDisplacedValues[monthIndex].toLocaleString();
+        
+        // Update charts
+        updateCharts(monthIndex);
+      }
+      
+      // Initialize charts
+      function initializeCharts() {
+        // Total Displaced Chart
+        const totalDisplacedCtx = document.getElementById('totalDisplacedChart').getContext('2d');
+        new Chart(totalDisplacedCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              data: [5200, 5400, 5600, 5800, 6200, 6800],
+              borderColor: '#4CAF50',
+              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: getChartOptions('thousands')
+        });
+        
+        // New Displacements Chart
+        const newDisplacedCtx = document.getElementById('newDisplacementsChart').getContext('2d');
+        new Chart(newDisplacedCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              data: [280, 300, 320, 350, 380, 420],
+              backgroundColor: 'rgba(244, 67, 54, 0.7)',
+              borderColor: 'rgba(244, 67, 54, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: getChartOptions('thousands')
+        });
+        
+        // Refugees Chart
+        const refugeesCtx = document.getElementById('refugeesChart').getContext('2d');
+        new Chart(refugeesCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              data: [900, 950, 1000, 1050, 1100, 1200],
+              borderColor: '#2196F3',
+              backgroundColor: 'rgba(33, 150, 243, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: getChartOptions('thousands')
+        });
+        
+        // Access Chart
+        const accessCtx = document.getElementById('accessChart').getContext('2d');
+        new Chart(accessCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              data: [80, 75, 70, 68, 65, 62],
+              borderColor: '#FF9800',
+              backgroundColor: 'rgba(255, 152, 0, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: getChartOptions('percentage')
+        });
+        
+        // Needs Chart
+        const needsCtx = document.getElementById('needsChart').getContext('2d');
+        new Chart(needsCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Food', 'Shelter', 'Water', 'Health', 'Protection'],
+            datasets: [{
+              data: [78, 65, 59, 42, 38],
+              backgroundColor: [
+                '#FF5252',
+                '#FF9800',
+                '#2196F3',
+                '#4CAF50',
+                '#9C27B0'
+              ],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+              legend: {
+                display: false
+              }
+            }
+          }
+        });
+      }
+      
+      // Update charts based on time period
+      function updateCharts(monthIndex) {
+        // In a real implementation, you would update chart data here
+        // For demo, we'll just simulate it
+        console.log(`Updating charts for month index: ${monthIndex}`);
+      }
+      
+      // Common chart options
+      function getChartOptions(unit) {
+        return {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (unit === 'thousands') {
+                    label += context.raw + 'K';
+                  } else if (unit === 'percentage') {
+                    label += context.raw + '%';
+                  } else {
+                    label += context.raw;
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              display: false
+            },
+            y: {
+              display: false
+            }
+          },
+          elements: {
+            point: {
+              radius: 0
+            }
+          }
+        };
       }
       
       // Load and process data
@@ -607,6 +1132,45 @@ L.control.layers(baseLayers).addTo(map);
              </div>`;
         
         layer.bindPopup(popupContent);
+        
+        // Update stats panel when clicked
+        layer.on('click', function() {
+          updateStatsPanel(feature.properties);
+        });
+      }
+      
+      // Update stats panel with feature data
+      function updateStatsPanel(properties) {
+        const statsPanel = document.getElementById('selection-stats');
+        
+        if (properties.isOrigin) {
+          statsPanel.innerHTML = `
+            <h4>${properties.s_State}</h4>
+            <p><strong>Total Displaced:</strong> ${properties.s_total_displaced ? properties.s_total_displaced.toLocaleString() : 'N/A'}</p>
+            <p><strong>Main Destinations:</strong></p>
+            <ul>
+              <li>Madani (320,000)</li>
+              <li>Port Sudan (180,000)</li>
+              <li>Gedaref (120,000)</li>
+            </ul>
+            <p><strong>Key Needs:</strong> Food (82%), Shelter (75%), Water (68%)</p>
+            <p><strong>Response Coverage:</strong> 45%</p>
+          `;
+        } else {
+          statsPanel.innerHTML = `
+            <h4>${properties.e_locality}</h4>
+            <p><strong>Total Displaced Population:</strong> ${properties.e_Volume ? properties.e_Volume.toLocaleString() : 'N/A'}</p>
+            <p><strong>Main Origins:</strong></p>
+            <ul>
+              <li>Khartoum (75%)</li>
+              <li>Darfur (15%)</li>
+              <li>Kordofan (10%)</li>
+            </ul>
+            <p><strong>Key Needs:</strong> ${properties.main_needs || 'Not specified'}</p>
+            <p><strong>Response Coverage:</strong> ${properties.coverage ? properties.coverage + '%' : 'Unknown'}</p>
+            <p><strong>Vulnerable Groups:</strong> 45% children, 30% women, 15% elderly</p>
+          `;
+        }
       }
       
       // Add legend
