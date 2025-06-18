@@ -1,1501 +1,623 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Sudan | IDPs Pathways Dashboard</title>
-  
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  
-  <!-- Font Awesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <!-- Custom CSS -->
-  <style>
-    :root {
-      --primary-color: #2a5885;
-      --secondary-color: #418FDE;
-      --accent-color: #ff671f;
-      --positive-color: #4CAF50;
-      --negative-color: #F44336;
-      --warning-color: #FF9800;
-      --text-color: #333;
-      --light-text: #f5f7fa;
-      --bg-color: #f5f7fa;
-      --card-bg: #ffffff;
-      --sidebar-bg: #1a3a6e;
-      --shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Border Crossing Monitoring System</title>
+    <style>
+        /* CSS Styles */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-    .dashboard-container {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
 
-    .sidebar {
-      width: 320px;
-      background: linear-gradient(135deg, var(--sidebar-bg) 0%, #12315a 100%);
-      color: white;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-      z-index: 10;
-    }
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
 
-    .sidebar-header {
-      text-align: center;
-      padding-bottom: 20px;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-      margin-bottom: 20px;
-    }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
 
-    .sidebar h2 {
-      margin-top: 0;
-      font-size: 1.5em;
-      font-weight: 600;
-      color: white;
-    }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
 
-    .sidebar p {
-      opacity: 0.9;
-      font-size: 0.9em;
-    }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1.5rem;
+        }
 
-    .indicator-card {
-      background: rgba(255,255,255,0.1);
-      border-radius: 10px;
-      padding: 18px;
-      margin-bottom: 18px;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255,255,255,0.05);
-      box-shadow: var(--shadow);
-    }
+        .sidebar {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
 
-    .indicator-card:hover {
-      background: rgba(255,255,255,0.15);
-      transform: translateY(-3px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-    }
+        .main-content {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 1.5rem;
+        }
 
-    .indicator-title {
-      font-size: 14px;
-      margin-bottom: 12px;
-      opacity: 0.9;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-    }
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
 
-    .indicator-title i {
-      margin-right: 8px;
-      font-size: 16px;
-    }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
 
-    .indicator-value {
-      font-size: 26px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: 0.5px;
-    }
+        .card h3 {
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
 
-    .indicator-change {
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
+        .card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
 
-    .positive {
-      color: var(--positive-color);
-    }
+        .incoming {
+            border-left: 4px solid #2ecc71;
+        }
 
-    .negative {
-      color: var(--negative-color);
-    }
+        .outgoing {
+            border-left: 4px solid #e74c3c;
+        }
 
-    .neutral {
-      color: var(--warning-color);
-    }
+        .discrepancy {
+            border-left: 4px solid #f39c12;
+        }
 
-    .chart-container {
-      height: 80px;
-      margin-top: 12px;
-    }
+        .data-entry-form {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
 
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-    }
+        .form-group {
+            margin-bottom: 1rem;
+        }
 
-    .header {
-      padding: 18px 25px;
-      background-color: var(--card-bg);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      z-index: 10;
-    }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
 
-    .header h1 {
-      color: var(--primary-color);
-      margin: 0;
-      font-size: 1.8em;
-      font-weight: 700;
-    }
+        .form-group input, 
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
 
-    .header p {
-      color: #666;
-      margin: 8px 0 0;
-      font-size: 0.95em;
-    }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
 
-    .map-container {
-      flex: 1;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: #e9edf0;
-    }
+        .transport-section {
+            margin-top: 1.5rem;
+            border-top: 1px solid #eee;
+            padding-top: 1.5rem;
+        }
 
-    .map-row {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+        .transport-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
 
-    #map {
-      flex: 2;
-      height: 100%;
-      background: #e9edf0;
-    }
+        .transport-item {
+            border: 1px solid #eee;
+            padding: 1rem;
+            border-radius: 4px;
+        }
 
-    .stats-panel {
-      flex: 1;
-      background: var(--card-bg);
-      overflow-y: auto;
-      padding: 20px;
-      box-shadow: -2px 0 10px rgba(0,0,0,0.08);
-      border-left: 1px solid #eee;
-    }
+        .transport-item label {
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
 
-    .stats-section {
-      margin-bottom: 25px;
-    }
+        .transport-item input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
 
-    .stats-section h3 {
-      color: var(--primary-color);
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-      margin-top: 0;
-      font-size: 1.2em;
-      font-weight: 600;
-    }
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
+        button:hover {
+            background-color: #2980b9;
+        }
 
-    .stat-item {
-      background: #f9f9f9;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      transition: transform 0.2s ease;
-    }
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
 
-    .stat-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
+        .alert-error {
+            background-color: #fdecea;
+            color: var(--accent-color);
+            border-left: 4px solid var(--accent-color);
+        }
 
-    .stat-value {
-      font-weight: 700;
-      font-size: 20px;
-      color: var(--primary-color);
-      margin: 5px 0;
-    }
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
 
-    .legend {
-      padding: 12px 18px;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.15);
-      line-height: 1.5;
-      font-size: 14px;
-      border: 1px solid #eee;
-    }
+        .map-container {
+            height: 300px;
+            background-color: #eee;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
 
-    .legend h4 {
-      margin: 0 0 12px;
-      color: var(--primary-color);
-      font-size: 15px;
-      font-weight: 600;
-    }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 1.5rem;
+        }
 
-    .legend i {
-      width: 20px;
-      height: 4px;
-      float: left;
-      margin: 8px 10px 0 0;
-      opacity: 0.9;
-      border-radius: 2px;
-    }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
 
-    .legend-circle {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
+        .tab.active {
+            border-bottom: 3px solid var(--secondary-color);
+            font-weight: 600;
+        }
 
-    .map-controls {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 12px;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.15);
-      border: 1px solid #eee;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+        .tab-content {
+            display: none;
+        }
 
-    .control-btn {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 8px 12px;
-      background: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s ease;
-      min-width: 120px;
-    }
+        .tab-content.active {
+            display: block;
+        }
 
-    .control-btn:hover {
-      background: var(--secondary-color);
-      transform: translateY(-1px);
-    }
-
-    .control-btn i {
-      margin-right: 8px;
-      font-size: 14px;
-    }
-
-    .loading-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.9);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid var(--primary-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 15px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .info-panel {
-      position: absolute;
-      bottom: 25px;
-      left: 25px;
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 18px;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.15);
-      max-width: 320px;
-      font-size: 14px;
-      border: 1px solid #eee;
-    }
-
-    .info-panel h3 {
-      margin-top: 0;
-      color: var(--primary-color);
-      font-size: 1.1em;
-      font-weight: 600;
-    }
-
-    .info-panel p {
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
-
-    .info-panel strong {
-      color: var(--primary-color);
-    }
-
-    .info-panel .close-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      color: #666;
-      transition: color 0.2s ease;
-    }
-
-    .info-panel .close-btn:hover {
-      color: var(--primary-color);
-    }
-
-    .time-slider {
-      position: absolute;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 12px 18px;
-      border-radius: 8px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.15);
-      width: 320px;
-      border: 1px solid #eee;
-    }
-
-    .time-slider input {
-      width: 100%;
-      height: 6px;
-      border-radius: 3px;
-      background: #ddd;
-      outline: none;
-      -webkit-appearance: none;
-    }
-
-    .time-slider input::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--primary-color);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .time-slider input::-webkit-slider-thumb:hover {
-      background: var(--secondary-color);
-      transform: scale(1.1);
-    }
-
-    .time-display {
-      text-align: center;
-      margin-top: 8px;
-      font-weight: 600;
-      color: var(--primary-color);
-      font-size: 15px;
-    }
-
-    /* Tooltip styling */
-    .leaflet-tooltip {
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 6px 10px;
-      font-size: 13px;
-      box-shadow: none;
-    }
-
-    .leaflet-tooltip:before {
-      border-top-color: rgba(0, 0, 0, 0.7);
-    }
-
-    /* Popup styling */
-    .leaflet-popup-content {
-      margin: 12px 15px;
-      line-height: 1.5;
-    }
-
-    .leaflet-popup-content h3 {
-      color: var(--primary-color);
-      margin-top: 0;
-      font-size: 1.1em;
-    }
-
-    .leaflet-popup-content p {
-      margin: 8px 0;
-    }
-
-    .leaflet-popup-content-wrapper {
-      border-radius: 8px;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.15);
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 1200px) {
-      .dashboard-container {
-        flex-direction: column;
-      }
-      
-      .sidebar {
-        width: auto;
-        height: 220px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        flex-direction: row;
-        padding: 15px;
-      }
-      
-      .indicator-card {
-        min-width: 240px;
-        margin-right: 15px;
-        margin-bottom: 0;
-      }
-      
-      .map-row {
-        flex-direction: column;
-      }
-      
-      #map {
-        height: 60vh;
-      }
-      
-      .stats-panel {
-        height: 40vh;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        height: 180px;
-      }
-      
-      .indicator-card {
-        min-width: 200px;
-        padding: 15px;
-      }
-      
-      .indicator-value {
-        font-size: 22px;
-      }
-      
-      .time-slider {
-        width: 280px;
-        bottom: 15px;
-      }
-      
-      .header h1 {
-        font-size: 1.5em;
-      }
-      
-      .header p {
-        font-size: 0.9em;
-      }
-      
-      .map-controls {
-        top: 10px;
-        right: 10px;
-        padding: 8px;
-      }
-      
-      .control-btn {
-        min-width: auto;
-        padding: 6px 10px;
-        font-size: 12px;
-      }
-    }
-    
-    /* Animation for cards */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .indicator-card {
-      animation: fadeIn 0.5s ease-out forwards;
-    }
-    
-    .indicator-card:nth-child(2) { animation-delay: 0.1s; }
-    .indicator-card:nth-child(3) { animation-delay: 0.2s; }
-    .indicator-card:nth-child(4) { animation-delay: 0.3s; }
-    .indicator-card:nth-child(5) { animation-delay: 0.4s; }
-    
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.05);
-      border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0,0,0,0.2);
-      border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0,0,0,0.3);
-    }
-    
-    /* Stats panel list styling */
-    #top-routes ol {
-      padding-left: 20px;
-      margin: 0;
-    }
-    
-    #top-routes li {
-      margin-bottom: 8px;
-      padding: 8px;
-      background: #f9f9f9;
-      border-radius: 4px;
-      transition: all 0.2s ease;
-    }
-    
-    #top-routes li:hover {
-      background: #f0f0f0;
-      transform: translateX(3px);
-    }
-    
-    #top-routes li::marker {
-      color: var(--primary-color);
-      font-weight: bold;
-    }
-    
-    /* Selection stats styling */
-    #selection-stats h4 {
-      color: var(--primary-color);
-      margin-top: 0;
-      font-size: 1.1em;
-    }
-    
-    #selection-stats ul {
-      padding-left: 20px;
-    }
-    
-    #selection-stats li {
-      margin-bottom: 6px;
-    }
-    
-    /* Gradient background for header */
-    .header {
-      background: linear-gradient(135deg, var(--card-bg) 0%, #f0f4f8 100%);
-      border-bottom: 1px solid #e0e6ed;
-    }
-  </style>
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
-
 <body>
-  <div class="dashboard-container">
-    <!-- Sidebar with indicators -->
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <h2>Sudan IDPs Dashboard</h2>
-        <p>Real-time displacement monitoring</p>
-      </div>
-      
-      <div class="indicator-card">
-        <div class="indicator-title"><i class="fas fa-people-arrows"></i> Total Displaced Persons</div>
-        <div class="indicator-value">6,800,000</div>
-        <div class="indicator-change positive">
-          <i class="fas fa-arrow-up"></i> 12% increase (last 30 days)
+    <header>
+        <div class="logo">BorderFlow Tracker</div>
+        <div id="current-date"></div>
+    </header>
+
+    <div class="container">
+        <div class="dashboard">
+            <div class="sidebar">
+                <h2>Quick Stats</h2>
+                <div class="stats-cards">
+                    <div class="card incoming">
+                        <h3>Incoming Today</h3>
+                        <div class="value" id="incoming-today">0</div>
+                        <div class="trend">+12% from yesterday</div>
+                    </div>
+                    <div class="card outgoing">
+                        <h3>Outgoing Today</h3>
+                        <div class="value" id="outgoing-today">0</div>
+                        <div class="trend">-5% from yesterday</div>
+                    </div>
+                    <div class="card discrepancy">
+                        <h3>Discrepancies</h3>
+                        <div class="value" id="discrepancies-today">0</div>
+                        <div class="trend">3 unresolved</div>
+                    </div>
+                </div>
+
+                <div class="map-container">
+                    <!-- Map will be rendered here -->
+                    <p style="text-align: center; padding-top: 140px;">Border Crossing Points Map</p>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="tabs">
+                    <div class="tab active" data-tab="entry">Data Entry</div>
+                    <div class="tab" data-tab="reports">Reports</div>
+                    <div class="tab" data-tab="discrepancies">Discrepancies</div>
+                </div>
+
+                <div class="tab-content active" id="entry-tab">
+                    <div class="data-entry-form">
+                        <div id="error-alert" class="alert alert-error"></div>
+                        <div id="success-alert" class="alert alert-success"></div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="date">Date of Interview</label>
+                                <input type="date" id="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="state">State</label>
+                                <select id="state" required>
+                                    <option value="">Select State</option>
+                                    <option value="Kassala">Kassala</option>
+                                    <option value="Gedaref">Gedaref</option>
+                                    <option value="Red Sea">Red Sea</option>
+                                    <option value="Blue Nile">Blue Nile</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="locality">Locality</label>
+                                <input type="text" id="locality" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="point">Flow Monitoring Point</label>
+                                <input type="text" id="point" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="gps">GPS Coordinates</label>
+                                <input type="text" id="gps" placeholder="lat,long" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="country">Neighbouring Country</label>
+                                <select id="country" required>
+                                    <option value="">Select Country</option>
+                                    <option value="Ethiopia">Ethiopia</option>
+                                    <option value="Eritrea">Eritrea</option>
+                                    <option value="South Sudan">South Sudan</option>
+                                    <option value="Chad">Chad</option>
+                                    <option value="Egypt">Egypt</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="enumerator">Enumerator Name</label>
+                                <input type="text" id="enumerator" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="direction">Direction of Movement</label>
+                                <select id="direction" required>
+                                    <option value="">Select Direction</option>
+                                    <option value="incoming">Incoming</option>
+                                    <option value="outgoing">Outgoing</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="transport-section">
+                            <h3>Means of Transport & People</h3>
+                            <div class="transport-grid" id="transport-grid">
+                                <!-- Transport items will be added here by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <h3>Nationality (By Individuals)</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="sudanese">Number of Sudanese individuals</label>
+                                        <input type="number" id="sudanese" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="non-sudanese">Number of non-Sudanese individuals</label>
+                                        <input type="number" id="non-sudanese" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div id="nationality-discrepancy" class="discrepancy-message"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <h3>Gender</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="male">Male</label>
+                                        <input type="number" id="male" min="0" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="female">Female</label>
+                                        <input type="number" id="female" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div id="gender-discrepancy" class="discrepancy-message"></div>
+                            </div>
+                        </div>
+
+                        <button id="submit-btn">Submit Data</button>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="reports-tab">
+                    <div class="card">
+                        <h2>Reports</h2>
+                        <p>Daily, weekly, and monthly reports will be displayed here.</p>
+                        <!-- Reports content would be added here -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="discrepancies-tab">
+                    <div class="card">
+                        <h2>Discrepancies</h2>
+                        <p>List of records with data discrepancies will be displayed here.</p>
+                        <!-- Discrepancies content would be added here -->
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="chart-container">
-          <canvas id="totalDisplacedChart"></canvas>
-        </div>
-      </div>
-      
-      <div class="indicator-card">
-        <div class="indicator-title"><i class="fas fa-running"></i> New Displacements (30 days)</div>
-        <div class="indicator-value">420,000</div>
-        <div class="indicator-change negative">
-          <i class="fas fa-arrow-up"></i> 8% increase
-        </div>
-        <div class="chart-container">
-          <canvas id="newDisplacementsChart"></canvas>
-        </div>
-      </div>
-      
-      <div class="indicator-card">
-        <div class="indicator-title"><i class="fas fa-globe-africa"></i> Cross-Border Refugees</div>
-        <div class="indicator-value">1,200,000</div>
-        <div class="indicator-change positive">
-          <i class="fas fa-arrow-up"></i> 5% increase
-        </div>
-        <div class="chart-container">
-          <canvas id="refugeesChart"></canvas>
-        </div>
-      </div>
-      
-      <div class="indicator-card">
-        <div class="indicator-title"><i class="fas fa-truck"></i> Humanitarian Access</div>
-        <div class="indicator-value">62%</div>
-        <div class="indicator-change negative">
-          <i class="fas fa-arrow-down"></i> 15% decrease
-        </div>
-        <div class="chart-container">
-          <canvas id="accessChart"></canvas>
-        </div>
-      </div>
-      
-      <div class="indicator-card">
-        <div class="indicator-title"><i class="fas fa-hands-helping"></i> Priority Needs</div>
-        <div class="indicator-value">Food (78%)</div>
-        <div class="indicator-change neutral">
-          Shelter (65%), Water (59%)
-        </div>
-        <div class="chart-container">
-          <canvas id="needsChart"></canvas>
-        </div>
-      </div>
     </div>
-    
-    <!-- Main content area -->
-    <div class="main-content">
-      <div class="header">
-        <h1>IDPs Pathways Across Sudan</h1>
-        <p>Visualizing internal displacement flows and patterns</p>
-      </div>
-      
-      <div class="map-container">
-        <div class="map-row">
-          <div id="map"></div>
-          <div class="stats-panel">
-            <div class="stats-section">
-              <h3><i class="fas fa-map-marker-alt"></i> Current Selection</h3>
-              <div id="selection-stats">
-                <p>Click on a location to view detailed statistics</p>
-              </div>
-            </div>
+
+    <script>
+        // Transport modes data
+        const transportModes = [
+            { name: "By foot", hasVehicles: false },
+            { name: "Passenger car", hasVehicles: true },
+            { name: "Taxi", hasVehicles: true },
+            { name: "Bus", hasVehicles: true },
+            { name: "Min-Bus", hasVehicles: true },
+            { name: "Animal cart (e.g., donkey cart)", hasVehicles: true },
+            { name: "Truck", hasVehicles: true },
+            { name: "Tractor", hasVehicles: true },
+            { name: "Lorry", hasVehicles: true },
+            { name: "Tuk-Tuk", hasVehicles: true },
+            { name: "Cargo Tricycle", hasVehicles: true },
+            { name: "On an animal (e.g., camel, donkey)", hasVehicles: false }
+        ];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date
+            const today = new Date();
+            document.getElementById('current-date').textContent = today.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('date').valueAsDate = today;
+
+            // Render transport items
+            const transportGrid = document.getElementById('transport-grid');
+            transportModes.forEach(mode => {
+                const transportItem = document.createElement('div');
+                transportItem.className = 'transport-item';
+                
+                if (mode.hasVehicles) {
+                    transportItem.innerHTML = `
+                        <label>${mode.name}: Number of Vehicles</label>
+                        <input type="number" class="transport-vehicles" data-mode="${mode.name.replace(/\s+/g, '-').toLowerCase()}" min="0" value="0">
+                        <label>${mode.name}: Number of People</label>
+                        <input type="number" class="transport-people" data-mode="${mode.name.replace(/\s+/g, '-').toLowerCase()}" min="0" value="0">
+                    `;
+                } else {
+                    transportItem.innerHTML = `
+                        <label>${mode.name}: Number of People</label>
+                        <input type="number" class="transport-people" data-mode="${mode.name.replace(/\s+/g, '-').toLowerCase()}" min="0" value="0">
+                    `;
+                }
+                
+                transportGrid.appendChild(transportItem);
+            });
+
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and content
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+
+            // Calculate totals when inputs change
+            document.querySelectorAll('.transport-people, #sudanese, #non-sudanese, #male, #female').forEach(input => {
+                input.addEventListener('input', calculateTotals);
+            });
+
+            // Form submission
+            document.getElementById('submit-btn').addEventListener('click', submitForm);
+        });
+
+        // Calculate totals and check for discrepancies
+        function calculateTotals() {
+            // Calculate transport total
+            let transportTotal = 0;
+            document.querySelectorAll('.transport-people').forEach(input => {
+                transportTotal += parseInt(input.value) || 0;
+            });
+
+            // Calculate nationality total
+            const sudanese = parseInt(document.getElementById('sudanese').value) || 0;
+            const nonSudanese = parseInt(document.getElementById('non-sudanese').value) || 0;
+            const nationalityTotal = sudanese + nonSudanese;
+
+            // Calculate gender total
+            const male = parseInt(document.getElementById('male').value) || 0;
+            const female = parseInt(document.getElementById('female').value) || 0;
+            const genderTotal = male + female;
+
+            // Check for discrepancies
+            const nationalityDiscrepancy = document.getElementById('nationality-discrepancy');
+            const genderDiscrepancy = document.getElementById('gender-discrepancy');
+
+            if (transportTotal !== nationalityTotal) {
+                nationalityDiscrepancy.textContent = `Warning: Transport total (${transportTotal}) doesn't match nationality total (${nationalityTotal})`;
+                nationalityDiscrepancy.style.color = 'red';
+            } else {
+                nationalityDiscrepancy.textContent = '';
+            }
+
+            if (transportTotal !== genderTotal) {
+                genderDiscrepancy.textContent = `Warning: Transport total (${transportTotal}) doesn't match gender total (${genderTotal})`;
+                genderDiscrepancy.style.color = 'red';
+            } else {
+                genderDiscrepancy.textContent = '';
+            }
+
+            // Update dashboard stats based on direction
+            const direction = document.getElementById('direction').value;
+            if (direction === 'incoming') {
+                document.getElementById('incoming-today').textContent = transportTotal;
+            } else if (direction === 'outgoing') {
+                document.getElementById('outgoing-today').textContent = transportTotal;
+            }
+
+            // Update discrepancies count
+            const discrepancyCount = (transportTotal !== nationalityTotal ? 1 : 0) + (transportTotal !== genderTotal ? 1 : 0);
+            document.getElementById('discrepancies-today').textContent = discrepancyCount;
+        }
+
+        // Submit form data
+        function submitForm() {
+            const errorAlert = document.getElementById('error-alert');
+            const successAlert = document.getElementById('success-alert');
             
-            <div class="stats-section">
-              <h3><i class="fas fa-route"></i> Top Displacement Routes</h3>
-              <div id="top-routes">
-                <ol>
-                  <li>Khartoum → Madani (320,000)</li>
-                  <li>Khartoum → Port Sudan (180,000)</li>
-                  <li>Darfur → Chad (150,000)</li>
-                  <li>Khartoum → Gedaref (120,000)</li>
-                  <li>Kordofan → White Nile (95,000)</li>
-                </ol>
-              </div>
-            </div>
+            // Hide alerts
+            errorAlert.style.display = 'none';
+            successAlert.style.display = 'none';
+
+            // Validate required fields
+            const requiredFields = ['date', 'state', 'locality', 'point', 'gps', 'country', 'enumerator', 'direction'];
+            let isValid = true;
             
-            <div class="stats-section">
-              <h3><i class="fas fa-heartbeat"></i> Vulnerability Indicators</h3>
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <div><i class="fas fa-child" style="color: #FF9800;"></i> Children Displaced</div>
-                  <div class="stat-value">2.1M</div>
-                </div>
-                <div class="stat-item">
-                  <div><i class="fas fa-female" style="color: #E91E63;"></i> Women Displaced</div>
-                  <div class="stat-value">2.9M</div>
-                </div>
-                <div class="stat-item">
-                  <div><i class="fas fa-wheelchair" style="color: #795548;"></i> Elderly Displaced</div>
-                  <div class="stat-value">420K</div>
-                </div>
-                <div class="stat-item">
-                  <div><i class="fas fa-blind" style="color: #9C27B0;"></i> Persons with Disabilities</div>
-                  <div class="stat-value">180K</div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="stats-section">
-              <h3><i class="fas fa-aid-kit"></i> Response Coverage</h3>
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <div><i class="fas fa-utensils" style="color: #4CAF50;"></i> Food Assistance</div>
-                  <div class="stat-value">58%</div>
-                </div>
-                <div class="stat-item">
-                  <div><i class="fas fa-home" style="color: #FF9800;"></i> Shelter Provided</div>
-                  <div class="stat-value">42%</div>
-                </div>
-                <div class="stat-item">
-                  <div><i class="fas fa-hospital" style="color: #F44336;"></i> Medical Access</div>
-                  <div class="stat-value">65%</div>
-                </div>
-                <div class="stat-item">
-                  <div><i class="fas fa-tint" style="color: #2196F3;"></i> Water Access</div>
-                  <div class="stat-value">71%</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Loading overlay -->
-      <div class="loading-overlay" id="loading-overlay">
-        <div class="spinner"></div>
-        <div>Loading displacement data...</div>
-      </div>
-      
-      <!-- Map controls -->
-      <div class="map-controls">
-        <button class="control-btn" id="reset-view">
-          <i class="fas fa-globe-africa"></i> <span>Reset View</span>
-        </button>
-        <button class="control-btn" id="toggle-animation">
-          <i class="fas fa-play" id="animation-icon"></i> <span id="animation-text">Play</span>
-        </button>
-        <button class="control-btn" id="toggle-flows">
-          <i class="fas fa-wave-square"></i> <span id="flows-text">Show Flows</span>
-        </button>
-        <button class="control-btn" id="toggle-points">
-          <i class="fas fa-map-marker-alt"></i> <span id="points-text">Show Points</span>
-        </button>
-        <button class="control-btn" id="toggle-legend">
-          <i class="fas fa-layer-group"></i> <span id="legend-text">Hide Legend</span>
-        </button>
-      </div>
-      
-      <!-- Time slider -->
-      <div class="time-slider">
-        <input type="range" min="1" max="12" value="6" class="slider" id="timeSlider">
-        <div class="time-display">June 2023</div>
-      </div>
-      
-      <!-- Info panel -->
-      <div class="info-panel" id="info-panel">
-        <button class="close-btn" id="close-info">&times;</button>
-        <h3>How to use this dashboard</h3>
-        <p><strong>Click</strong> on any flow line or point to see detailed information.</p>
-        <p><strong>Hover</strong> over elements to see quick details.</p>
-        <p>Use the <strong>controls</strong> in the top right to adjust the visualization.</p>
-        <p>The <strong>sidebar</strong> shows key indicators and trends.</p>
-        <p>The <strong>right panel</strong> displays detailed statistics for selected areas.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  
-  <!-- Flowmap layer dependencies -->
-  <script src="https://unpkg.com/@tweenjs/tween.js@18.6.4/dist/tween.umd.js"></script>
-  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
-  <script src="./src/CanvasFlowmapLayer.js"></script>
-  
-  <!-- Main script -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize charts
-      initializeCharts();
-      
-      // Initialize the map with a more modern basemap
-      const map = L.map('map', {
-        zoomControl: false,
-        preferCanvas: true
-      }).setView([16, 30], 5.5);
-      
-      // Add zoom control with better position
-      L.control.zoom({
-        position: 'topright'
-      }).addTo(map);
-      
-      // Base layers
-      const cartoDBLight = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      });
-
-      const openStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      });
-
-      const esriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
-      });
-
-      const stamenToner = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
-        attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>'
-      });
-
-      const mapboxLight = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          tileSize: 512,
-          zoomOffset: -1,
-          maxZoom: 18
-      });
-
-      const mapboxStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          tileSize: 512,
-          zoomOffset: -1,
-          maxZoom: 18
-      });
-
-      const mapboxSatellite = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          tileSize: 512,
-          zoomOffset: -1,
-          maxZoom: 18
-      });
-
-      const mapboxOutdoors = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          tileSize: 512,
-          zoomOffset: -1,
-          maxZoom: 18
-      });
-      
-      // Custom Mapbox style with better contrast for flow visualization
-      const mapboxCustom = L.tileLayer('https://api.mapbox.com/styles/v1/omerosman/cm8oy6is4006101si7ll3bs4h/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoib21lcm9zbWFuIiwiYSI6ImUxZDBkODBlNjQxMDE2M2Y3OTQ3MWIwNTJkMjgzZTI3In0.ekCHuxRflTOO0RpQ6rQR7Q', {
-          attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          tileSize: 512,
-          zoomOffset: -1,
-          maxZoom: 18
-      });
-
-      // Add default base layer to the map
-      mapboxCustom.addTo(map);
-
-      // Add layer control to the map with better styling
-      const baseLayers = {
-        "Mapbox Light": mapboxLight,
-        "Mapbox Streets": mapboxStreets,
-        "Mapbox Outdoors": mapboxOutdoors,
-        "Mapbox Satellite": mapboxSatellite,
-        "CartoDB Light": cartoDBLight,
-        "OpenStreetMap": openStreetMap,
-        "Esri World Imagery": esriWorldImagery,
-        "Stamen Toner": stamenToner,
-        "Mapbox Custom": mapboxCustom
-      };
-
-      L.control.layers(baseLayers, null, {
-        position: 'topright',
-        collapsed: false
-      }).addTo(map);
-      
-      // State boundaries layer (for reference)
-      let stateBoundariesLayer;
-      
-      // Flowmap layer variables
-      let flowmapLayer;
-      let isAnimationPlaying = false;
-      let showFlows = true;
-      let showPoints = true;
-      let showLegend = true;
-      
-      // Load data and initialize visualization
-      loadData();
-      
-      // UI event handlers
-      document.getElementById('reset-view').addEventListener('click', function() {
-        map.setView([16, 30], 5.5);
-      });
-      
-      document.getElementById('toggle-animation').addEventListener('click', function() {
-        isAnimationPlaying = !isAnimationPlaying;
-        
-        if (flowmapLayer) {
-          flowmapLayer.setAnimationStarted(isAnimationPlaying);
-          updateAnimationButton();
-        }
-      });
-      
-      document.getElementById('toggle-flows').addEventListener('click', function() {
-        showFlows = !showFlows;
-        
-        if (flowmapLayer) {
-          flowmapLayer.setPathDisplayMode(showFlows ? 'all' : 'none');
-          updateFlowsButton();
-        }
-      });
-      
-      document.getElementById('toggle-points').addEventListener('click', function() {
-        showPoints = !showPoints;
-        
-        if (flowmapLayer) {
-          flowmapLayer.setPointVisibility(showPoints);
-          updatePointsButton();
-        }
-      });
-      
-      document.getElementById('toggle-legend').addEventListener('click', function() {
-        showLegend = !showLegend;
-        if (showLegend) {
-          legend.addTo(map);
-        } else {
-          map.removeControl(legend);
-        }
-        updateLegendButton();
-      });
-      
-      document.getElementById('close-info').addEventListener('click', function() {
-        document.getElementById('info-panel').style.display = 'none';
-      });
-      
-      // Time slider handler
-      document.getElementById('timeSlider').addEventListener('input', function(e) {
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                       'July', 'August', 'September', 'October', 'November', 'December'];
-        const monthIndex = parseInt(e.target.value) - 1;
-        document.querySelector('.time-display').textContent = `${months[monthIndex]} 2023`;
-        
-        // Here you would typically update the data shown based on the time period
-        // For now, we'll just simulate it
-        simulateTimeChange(monthIndex);
-      });
-      
-      // Update button states
-      function updateAnimationButton() {
-        const icon = document.getElementById('animation-icon');
-        const text = document.getElementById('animation-text');
-        
-        if (isAnimationPlaying) {
-          icon.className = 'fas fa-pause';
-          text.textContent = 'Pause';
-        } else {
-          icon.className = 'fas fa-play';
-          text.textContent = 'Play';
-        }
-      }
-      
-      function updateFlowsButton() {
-        const text = document.getElementById('flows-text');
-        text.textContent = showFlows ? 'Hide Flows' : 'Show Flows';
-      }
-      
-      function updatePointsButton() {
-        const text = document.getElementById('points-text');
-        text.textContent = showPoints ? 'Hide Points' : 'Show Points';
-      }
-      
-      function updateLegendButton() {
-        const text = document.getElementById('legend-text');
-        text.textContent = showLegend ? 'Hide Legend' : 'Show Legend';
-      }
-      
-      // Simulate time change (for demo purposes)
-      function simulateTimeChange(monthIndex) {
-        // Update indicator values based on month
-        const displacedValues = [5200000, 5400000, 5600000, 5800000, 6200000, 6800000, 
-                               7000000, 7200000, 7500000, 7800000, 8000000, 8200000];
-        const newDisplacedValues = [280000, 300000, 320000, 350000, 380000, 420000, 
-                                  450000, 480000, 500000, 520000, 540000, 560000];
-        
-        document.querySelectorAll('.indicator-value')[0].textContent = displacedValues[monthIndex].toLocaleString();
-        document.querySelectorAll('.indicator-value')[1].textContent = newDisplacedValues[monthIndex].toLocaleString();
-        
-        // Update charts
-        updateCharts(monthIndex);
-      }
-      
-      // Initialize charts with better styling
-      function initializeCharts() {
-        // Chart configuration options
-        const lineChartOptions = {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: 'rgba(0,0,0,0.8)',
-              titleFont: { size: 12, weight: 'bold' },
-              bodyFont: { size: 11 },
-              callbacks: {
-                label: function(context) {
-                  return context.raw + 'K';
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value) {
+                    isValid = false;
+                    field.style.borderColor = 'red';
+                } else {
+                    field.style.borderColor = '';
                 }
-              }
+            });
+
+            if (!isValid) {
+                errorAlert.textContent = 'Please fill in all required fields';
+                errorAlert.style.display = 'block';
+                return;
             }
-          },
-          scales: {
-            x: { display: false, grid: { display: false } },
-            y: { display: false, grid: { display: false } }
-          },
-          elements: {
-            point: { radius: 0, hoverRadius: 5 },
-            line: { tension: 0.4, borderWidth: 2 }
-          }
-        };
-        
-        // Total Displaced Chart
-        const totalDisplacedCtx = document.getElementById('totalDisplacedChart').getContext('2d');
-        new Chart(totalDisplacedCtx, {
-          type: 'line',
-          data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-              data: [5200, 5400, 5600, 5800, 6200, 6800],
-              borderColor: '#4CAF50',
-              backgroundColor: 'rgba(76, 175, 80, 0.1)',
-              fill: true
-            }]
-          },
-          options: lineChartOptions
-        });
-        
-        // New Displacements Chart
-        const newDisplacedCtx = document.getElementById('newDisplacementsChart').getContext('2d');
-        new Chart(newDisplacedCtx, {
-          type: 'bar',
-          data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-              data: [280, 300, 320, 350, 380, 420],
-              backgroundColor: 'rgba(244, 67, 54, 0.7)',
-              borderColor: 'rgba(244, 67, 54, 1)',
-              borderWidth: 0,
-              borderRadius: 3
-            }]
-          },
-          options: {
-            ...lineChartOptions,
-            plugins: {
-              ...lineChartOptions.plugins,
-              tooltip: {
-                ...lineChartOptions.plugins.tooltip,
-                callbacks: {
-                  label: function(context) {
-                    return context.raw + 'K';
-                  }
+
+            // Prepare transport data
+            const transportData = {};
+            transportModes.forEach(mode => {
+                const modeKey = mode.name.replace(/\s+/g, '-').toLowerCase();
+                if (mode.hasVehicles) {
+                    transportData[`${modeKey}-vehicles`] = 
+                        parseInt(document.querySelector(`.transport-vehicles[data-mode="${modeKey}"]`).value) || 0;
                 }
-              }
-            }
-          }
-        });
-        
-        // Refugees Chart
-        const refugeesCtx = document.getElementById('refugeesChart').getContext('2d');
-        new Chart(refugeesCtx, {
-          type: 'line',
-          data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-              data: [900, 950, 1000, 1050, 1100, 1200],
-              borderColor: '#2196F3',
-              backgroundColor: 'rgba(33, 150, 243, 0.1)',
-              fill: true
-            }]
-          },
-          options: lineChartOptions
-        });
-        
-        // Access Chart
-        const accessCtx = document.getElementById('accessChart').getContext('2d');
-        new Chart(accessCtx, {
-          type: 'line',
-          data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-              data: [80, 75, 70, 68, 65, 62],
-              borderColor: '#FF9800',
-              backgroundColor: 'rgba(255, 152, 0, 0.1)',
-              fill: true
-            }]
-          },
-          options: {
-            ...lineChartOptions,
-            plugins: {
-              ...lineChartOptions.plugins,
-              tooltip: {
-                ...lineChartOptions.plugins.tooltip,
-                callbacks: {
-                  label: function(context) {
-                    return context.raw + '%';
-                  }
+                transportData[`${modeKey}-people`] = 
+                    parseInt(document.querySelector(`.transport-people[data-mode="${modeKey}"]`).value) || 0;
+            });
+
+            // Prepare the complete data object
+            const formData = {
+                date: document.getElementById('date').value,
+                state: document.getElementById('state').value,
+                locality: document.getElementById('locality').value,
+                point: document.getElementById('point').value,
+                gps: document.getElementById('gps').value,
+                country: document.getElementById('country').value,
+                enumerator: document.getElementById('enumerator').value,
+                direction: document.getElementById('direction').value,
+                transport: transportData,
+                nationality: {
+                    sudanese: parseInt(document.getElementById('sudanese').value) || 0,
+                    nonSudanese: parseInt(document.getElementById('non-sudanese').value) || 0
+                },
+                gender: {
+                    male: parseInt(document.getElementById('male').value) || 0,
+                    female: parseInt(document.getElementById('female').value) || 0
                 }
-              }
-            }
-          }
-        });
-        
-        // Needs Chart
-        const needsCtx = document.getElementById('needsChart').getContext('2d');
-        new Chart(needsCtx, {
-          type: 'doughnut',
-          data: {
-            labels: ['Food', 'Shelter', 'Water', 'Health', 'Protection'],
-            datasets: [{
-              data: [78, 65, 59, 42, 38],
-              backgroundColor: [
-                '#FF5252',
-                '#FF9800',
-                '#2196F3',
-                '#4CAF50',
-                '#9C27B0'
-              ],
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                backgroundColor: 'rgba(0,0,0,0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.label + ': ' + context.raw + '%';
-                  }
-                }
-              }
-            }
-          }
-        });
-      }
-      
-      // Update charts based on time period
-      function updateCharts(monthIndex) {
-        // In a real implementation, you would update chart data here
-        // For demo, we'll just simulate it
-        console.log(`Updating charts for month index: ${monthIndex}`);
-      }
-      
-      // Load and process data
-      function loadData() {
-        // Load state boundaries (GeoJSON)
-        fetch('./data/sudan_states.geojson')
-          .then(response => response.json())
-          .then(data => {
-            stateBoundariesLayer = L.geoJSON(data, {
-              style: {
-                color: '#555',
-                weight: 1,
-                opacity: 0.7,
-                fillOpacity: 0.1
-              }
-            }).addTo(map);
-          })
-          .catch(error => {
-            console.error('Error loading state boundaries:', error);
-          });
-        
-        // Load displacement data (CSV)
-        Papa.parse('./data/IDPs_Pathway.csv', {
-          download: true,
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: function(results) {
-            // Process the data to ensure displacement destination equals sum of e_Volume by e_locality_id
-            const processedData = processData(results.data);
-            initializeFlowmap(processedData);
-            document.getElementById('loading-overlay').style.display = 'none';
-          },
-          error: function(error) {
-            console.error('Error loading displacement data:', error);
-            document.getElementById('loading-overlay').innerHTML = 
-              '<div style="color: red; text-align: center;">Error loading data. Please try again later.</div>';
-          }
-        });
-      }
-      
-      // Process data to ensure displacement destination equals sum of e_Volume by e_locality_id
-      function processData(data) {
-        // Group data by e_locality_id and calculate total volume for each destination
-        const destinationVolumes = {};
-        
-        data.forEach(item => {
-          const localityId = item.e_locality_id;
-          const volume = parseFloat(item.e_Volume) || 0;
-          
-          if (!destinationVolumes[localityId]) {
-            destinationVolumes[localityId] = {
-              totalVolume: 0,
-              items: []
             };
-          }
-          
-          destinationVolumes[localityId].totalVolume += volume;
-          destinationVolumes[localityId].items.push(item);
-        });
-        
-        // Update each item's e_Volume to be the total volume for its destination
-        const processedData = [];
-        
-        Object.keys(destinationVolumes).forEach(localityId => {
-          const destination = destinationVolumes[localityId];
-          const totalVolume = destination.totalVolume;
-          
-          destination.items.forEach(item => {
-            // Update the e_Volume to be the total for this destination
-            item.e_Volume = totalVolume;
-            processedData.push(item);
-          });
-        });
-        
-        return processedData;
-      }
-      
-      // Initialize flowmap visualization with improved styling
-      function initializeFlowmap(data) {
-        // Convert CSV data to GeoJSON format
-        const geoJsonFeatureCollection = {
-          type: 'FeatureCollection',
-          features: data.map(datum => ({
-            type: 'Feature',
-            geometry: { type: 'Point', coordinates: [datum.s_lon, datum.s_lat] },
-            properties: datum
-          }))
-        };
-        
-        // Create flowmap layer with better visual styling
-        flowmapLayer = L.canvasFlowmapLayer(geoJsonFeatureCollection, {
-          originAndDestinationFieldIds: {
-            originUniqueIdField: 's_state_id',
-            originGeometry: { x: 's_lon', y: 's_lat' },
-            destinationUniqueIdField: 'e_locality_id',
-            destinationGeometry: { x: 'e_lon', y: 'e_lat' }
-          },
-          style: (feature) => {
-            const baseRadius = 10;
-            const maxRadius = 8;
-            const volume = feature.properties.e_Volume || 0;
+
+            // Here you would typically send the data to your server (KoBo server in this case)
+            // For this example, we'll just log it and show a success message
+            console.log('Form data to be submitted:', formData);
             
-            // Different styles for origin and destination points
-            const radius = feature.properties.isOrigin
-              ? baseRadius
-              : Math.min(baseRadius + (volume / 5000), maxRadius);
-            
-            return {
-              radius: radius,
-              weight: 1,
-              color: '#fff',
-              fillColor: feature.properties.isOrigin ? '#ff671f' : '#418FDE',
-              fillOpacity: feature.properties.isOrigin ? 0.9 : 0.8,
-              shadow: true
-            };
-          },
-          canvasBezierStyle: {
-            type: 'classBreaks',
-            field: 'e_Volume',
-            classBreakInfos: [
-              { 
-                classMinValue: 1, 
-                classMaxValue: 50000, 
-                symbol: { 
-                  strokeStyle: '#ffb81c', 
-                  lineWidth: 1.0, 
-                  lineCap: 'round', 
-                  shadowColor: 'rgba(255, 184, 28, 0.5)', 
-                  shadowBlur: 3.0 
-                } 
-              },
-              { 
-                classMinValue: 50001, 
-                classMaxValue: 100000, 
-                symbol: { 
-                  strokeStyle: '#ff671f', 
-                  lineWidth: 2.0, 
-                  lineCap: 'round', 
-                  shadowColor: 'rgba(255, 103, 31, 0.5)', 
-                  shadowBlur: 3.0 
-                } 
-              },
-              { 
-                classMinValue: 100001, 
-                classMaxValue: 500000, 
-                symbol: { 
-                  strokeStyle: '#d22630', 
-                  lineWidth: 3.0, 
-                  lineCap: 'round', 
-                  shadowColor: 'rgba(210, 38, 48, 0.5)', 
-                  shadowBlur: 4.0 
-                } 
-              }
-            ],
-            defaultSymbol: { 
-              strokeStyle: '#e7e1ef', 
-              lineWidth: 0.5, 
-              lineCap: 'round', 
-              shadowColor: 'rgba(231, 225, 239, 0.5)', 
-              shadowBlur: 2.0 
-            }
-          },
-          pathDisplayMode: 'all',
-          animationStarted: true,
-          animationEasingFamily: 'Cubic',
-          animationEasingType: 'InOut',
-          animationDuration: 2500,
-          onEachFeature: addTooltip
-        }).addTo(map);
-        
-        // Set initial UI states
-        isAnimationPlaying = true;
-        showFlows = true;
-        showPoints = true;
-        updateAnimationButton();
-        updateFlowsButton();
-        updatePointsButton();
-        
-        // Highlight paths on mouseover
-        flowmapLayer.on('mouseover', (e) => {
-          if (e.sharedOriginFeatures.length) {
-            flowmapLayer.selectFeaturesForPathDisplay(e.sharedOriginFeatures, 'SELECTION_NEW');
-          }
-          if (e.sharedDestinationFeatures.length) {
-            flowmapLayer.selectFeaturesForPathDisplay(e.sharedDestinationFeatures, 'SELECTION_NEW');
-          }
-        });
-        
-        // Select initial feature for path display (Khartoum)
-        flowmapLayer.selectFeaturesForPathDisplayById('s_state_id', "SD15", true, 'SELECTION_NEW');
-      }
-      
-      // Add tooltip and popup to features with better styling
-      function addTooltip(feature, layer) {
-        const tooltipContent = feature.properties.isOrigin
-          ? `<i class="fas fa-map-marker-alt" style="color:#ff671f"></i> ${feature.properties.s_State}`
-          : `<i class="fas fa-map-marker-alt" style="color:#418FDE"></i> ${feature.properties.e_locality}`;
-        
-        layer.bindTooltip(tooltipContent, {
-          direction: 'top',
-          className: 'custom-tooltip',
-          opacity: 0.9
-        });
-        
-        layer.on('mouseover', () => layer.openTooltip());
-        layer.on('mouseout', () => layer.closeTooltip());
-        
-        // Add popup with more detailed information
-        const popupContent = feature.properties.isOrigin
-          ? `<div style="min-width: 220px;">
-               <h4 style="margin: 0 0 12px; color: #2a5885; font-size: 1.1em;">
-                 <i class="fas fa-map-marker-alt" style="color:#ff671f"></i> Displacement Origin
-               </h4>
-               <p><strong>State:</strong> ${feature.properties.s_State}</p>
-               <p><strong>Total Displaced:</strong> ${feature.properties.s_total_displaced ? feature.properties.s_total_displaced.toLocaleString() : 'N/A'}</p>
-               <p style="margin-bottom: 0;"><small>Click to view destination flows</small></p>
-             </div>`
-          : `<div style="min-width: 220px;">
-               <h4 style="margin: 0 0 12px; color: #2a5885; font-size: 1.1em;">
-                 <i class="fas fa-map-marker-alt" style="color:#418FDE"></i> Displacement Destination
-               </h4>
-               <p><strong>Location:</strong> ${feature.properties.e_locality}</p>
-               <p><strong>Total Displaced Population:</strong> ${feature.properties.e_Volume ? feature.properties.e_Volume.toLocaleString() : 'N/A'}</p>
-               <p><strong>Main Needs:</strong> ${feature.properties.main_needs || 'Not specified'}</p>
-             </div>`;
-        
-        layer.bindPopup(popupContent, {
-          maxWidth: 300,
-          className: 'custom-popup'
-        });
-        
-        // Update stats panel when clicked
-        layer.on('click', function() {
-          updateStatsPanel(feature.properties);
-        });
-      }
-      
-      // Update stats panel with feature data
-      function updateStatsPanel(properties) {
-        const statsPanel = document.getElementById('selection-stats');
-        
-        if (properties.isOrigin) {
-          statsPanel.innerHTML = `
-            <h4><i class="fas fa-map-marker-alt" style="color:#ff671f"></i> ${properties.s_State}</h4>
-            <p><strong>Total Displaced:</strong> ${properties.s_total_displaced ? properties.s_total_displaced.toLocaleString() : 'N/A'}</p>
-            <p><strong>Main Destinations:</strong></p>
-            <ul>
-              <li>Madani (320,000)</li>
-              <li>Port Sudan (180,000)</li>
-              <li>Gedaref (120,000)</li>
-            </ul>
-            <p><strong>Key Needs:</strong> Food (82%), Shelter (75%), Water (68%)</p>
-            <p><strong>Response Coverage:</strong> 45%</p>
-          `;
-        } else {
-          statsPanel.innerHTML = `
-            <h4><i class="fas fa-map-marker-alt" style="color:#418FDE"></i> ${properties.e_locality}</h4>
-            <p><strong>Total Displaced Population:</strong> ${properties.e_Volume ? properties.e_Volume.toLocaleString() : 'N/A'}</p>
-            <p><strong>Main Origins:</strong></p>
-            <ul>
-              <li>Khartoum (75%)</li>
-              <li>Darfur (15%)</li>
-              <li>Kordofan (10%)</li>
-            </ul>
-            <p><strong>Key Needs:</strong> ${properties.main_needs || 'Not specified'}</p>
-            <p><strong>Response Coverage:</strong> ${properties.coverage ? properties.coverage + '%' : 'Unknown'}</p>
-            <p><strong>Vulnerable Groups:</strong> 45% children, 30% women, 15% elderly</p>
-          `;
+            successAlert.textContent = 'Data submitted successfully!';
+            successAlert.style.display = 'block';
+
+            // Reset form after submission (optional)
+            // document.querySelector('form').reset();
         }
-      }
-      
-      // Add legend with improved styling
-      const legend = L.control({ position: 'bottomright' });
-      legend.onAdd = function() {
-        const div = L.DomUtil.create('div', 'legend');
-        div.innerHTML = `
-          <h4><i class="fas fa-key"></i> IDP Flow Volume</h4>
-          <div style="display: flex; align-items: center; margin: 8px 0;">
-            <i style="background:#ffb81c; height: 4px;"></i> 
-            <span style="margin-left: 8px;">&lt; 50,000 IDPs</span>
-          </div>
-          <div style="display: flex; align-items: center; margin: 8px 0;">
-            <i style="background:#ff671f; height: 6px;"></i> 
-            <span style="margin-left: 8px;">50,000 - 100,000 IDPs</span>
-          </div>
-          <div style="display: flex; align-items: center; margin: 8px 0;">
-            <i style="background:#d22630; height: 8px;"></i> 
-            <span style="margin-left: 8px;">&gt; 100,000 IDPs</span>
-          </div>
-          <hr style="margin: 12px 0; border-color: #eee;">
-          <div style="display: flex; align-items: center; margin: 8px 0;">
-            <span class="legend-circle" style="background:#418FDE;"></span>
-            <span>Destination Points</span>
-          </div>
-          <div style="display: flex; align-items: center; margin: 8px 0;">
-            <span class="legend-circle" style="background:#ff671f;"></span>
-            <span>Origin Points</span>
-          </div>
-        `;
-        return div;
-      };
-      legend.addTo(map);
-    });
-  </script>
+    </script>
 </body>
 </html>
